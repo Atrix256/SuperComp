@@ -15,25 +15,47 @@ int main(int argc, char **argv)
         // we need an even number of bits to do adding!
         if (superPositionedBits.size() % 2 == 0)
         {
-            std::cout << "file loaded!\n";
+            std::cout << "file loaded!\n\n";
             const size_t numBitsAdding = superPositionedBits.size() / 2;
+            std::cout << "Adding " << numBitsAdding << " bits and " << numBitsAdding << " bits to get a " << numBitsAdding + 1 << " bit result\n";
+            std::cout << "Note that you could truncate the high bit if you wanted to\n";
 
-            // do our multi bit addition!
+            // Calculate the LCM of our keys so we can make results mod this LCM and keep numbers smaller
+            TINT keysLCM = 1;
+            for (const TINT& v : keys)
+                keysLCM *= v;
+
+            // do our multi bit addition! N bits + N bits = up to N+1 bit result.
             // Note that we can initialize our carry bit to the value 0.  we don't
             // need to initialize it to a superpositioned bit value!
             TINT carryBit = 0;
             std::vector<TINT> adderResults;
-            adderResults.resize(numBitsAdding);
+            adderResults.resize(numBitsAdding+1);
             for (size_t i = 0; i < numBitsAdding; ++i)
-                adderResults[i] = FullAdder(superPositionedBits[i], superPositionedBits[i+numBitsAdding], carryBit);
+            {
+                adderResults[i] = FullAdder(superPositionedBits[i], superPositionedBits[i + numBitsAdding], carryBit) % keysLCM;
+                carryBit = carryBit % keysLCM;
+            }
+            adderResults[numBitsAdding] = carryBit;
 
-            // show superpositional result
+            // show superpositional result and error (max and % of each key)
             std::cout << "\nSuperpositional Adder Result:\n\n";
-            for (size_t i = 0; i < numBitsAdding; ++i)
-                std::cout << i << ": " << adderResults[i] << "\n\n";
+            for (size_t i = 0, c = adderResults.size(); i < c; ++i)
+            {
+                std::cout << "--Bit " << i << "--\n\n" << adderResults[i] << "\n\n";
+
+                float maxError = 0.0f;
+                for (int keyIndex = 0, keyCount = keys.size(); keyIndex < keyCount; ++keyIndex)
+                {
+                    float error = 100.0f * float(adderResults[i] % keys[keyIndex]) / float(keys[keyIndex]);
+                    if (error > maxError)
+                        maxError = error;
+                }
+                std::cout << "Highest Error = " << std::setprecision(2) << maxError << "%\n\n";
+            }
 
             // Permute through results, make sure truth tables add up
-            printf("Truth Tables Test:\n");
+            printf("Result Verification:\n");
             const size_t maxValue = (1 << numBitsAdding) - 1;
             for (size_t a = 0; a <= maxValue; ++a)
             {
@@ -44,14 +66,14 @@ int main(int argc, char **argv)
 
                     // decode result for this specific key index
                     size_t result = 0;
-                    for (size_t i = 0; i < numBitsAdding; ++i)
+                    for (size_t i = 0, c = adderResults.size(); i < c; ++i)
                         result = result | (size_t((adderResults[i] % keys[keyIndex]) % 2) << i);
 
                     // show the result
                     std::cout << "  [" << keyIndex << "]  " << a << " + " << b << " = " << result << "\n";
 
                     // verify the result
-                    if (result != ((a + b) & maxValue))
+                    if (result != a + b)
                     {
                         std::cout << "ERROR! incorrect value detected!";
                         // TODO: assert or something
@@ -76,17 +98,14 @@ int main(int argc, char **argv)
 /*
 TODO:
 
-* Assert if the error gets too large?
+* make keygen take command line params for number of bits (and prime or not / min value?) instead of asking user for input.
 
-* show error levels? perhaps as percent of smaller key? maybe investigate error levels a bit to see what they are for each key.
-
-* could have another program permute the results, to show it's independent of circuit that created the answer? i dunno.
-
-* make keygen take command line params for number of bits (and prime or not / min value?) instead of asking user for input
-
-! no, maybe more like, it does the adding, and then prompts you for numbers to add, and then does so only by decrypting with the specific keys
- * or maybe it'll take however many bits it was given and brute force check that it's correct for all numbers?
+* make this program take command line params for the input file?
 
 ! NEXT: something more time consuming or impressive.  Like shor's algorithm or who knows what else.  CORDIC math perhaps to calculate sine since it's branchless?
+
+! NEXT: multiplier? working towards full homomoprhism!
+ * https://en.wikipedia.org/wiki/Binary_multiplier
+
 
 */
