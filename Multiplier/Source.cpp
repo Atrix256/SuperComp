@@ -4,6 +4,14 @@
 typedef boost::multiprecision::cpp_int TINT;
 
 //=================================================================================
+void DoMultiply (const std::vector<TINT>& A, const std::vector<TINT>& B, std::vector<TINT>& results)
+{
+    results.resize(A.size() + B.size());
+    std::fill(results.begin(), results.end(), 0);
+    // TODO: make this work!
+}
+
+//=================================================================================
 int main(int argc, char **argv)
 {
     // verify parameters
@@ -37,19 +45,15 @@ int main(int argc, char **argv)
             // Note that we can initialize our carry bit to the value 0.  we don't
             // need to initialize it to a superpositioned bit value!
             TINT carryBit = 0;
-            std::vector<TINT> results;
-            results.resize(numInputBits * 2);
-
-            // TODO: make the multiplication work here!
-            std::fill(results.begin(), results.end(), 0);
-            /*
-            for (size_t i = 0; i < numBitsMultiplying; ++i)
+            std::vector<TINT> a, b, results;
+            a.resize(numInputBits);
+            b.resize(numInputBits);
+            for (size_t i = 0; i < numInputBits; ++i)
             {
-                adderResults[i] = FullAdder(superPositionedBits[i], superPositionedBits[i + numBitsAdding], carryBit) % keysLCM;
-                carryBit = carryBit % keysLCM;
+                a[i] = superPositionedBits[i];
+                b[i] = superPositionedBits[i + numInputBits];
             }
-            adderResults[numBitsAdding] = carryBit;
-            */
+            DoMultiply(a, b, results);
 
             // show superpositional result and error (max and % of each key)
             std::cout << "\nSuperpositional Multiplier Result:\n\n";
@@ -113,6 +117,9 @@ int main(int argc, char **argv)
 TODO:
 * make this work
 * https://en.wikipedia.org/wiki/Binary_multiplier
+* put the add / multiply code in shared
+ * eventually will abstract a type with operator overloads
+* remove adder / multiplier even bit count restriction
 
 ! NEXT:
  * divide / modulus: http://courses.cs.vt.edu/~cs1104/BuildingBlocks/divide.030.html

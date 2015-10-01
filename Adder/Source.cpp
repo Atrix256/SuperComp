@@ -1,7 +1,5 @@
 #include "Shared/Shared.h"
-#include <boost/multiprecision/cpp_int.hpp>
-
-typedef boost::multiprecision::cpp_int TINT;
+#include "Shared/CSuperInt.h"
 
 //=================================================================================
 int main(int argc, char **argv)
@@ -33,9 +31,19 @@ int main(int argc, char **argv)
             for (const TINT& v : keys)
                 keysLCM *= v;
 
+            // Make our superpositional integers
+            CSuperInt A(superPositionedBits.begin(), superPositionedBits.begin() + numBitsAdding, keys);
+            CSuperInt B(superPositionedBits.begin() + numBitsAdding, superPositionedBits.end(), keys);
+            CSuperInt resultsAB(keys);
+
+            resultsAB = A + B;
+
+            const std::vector<TINT> &adderResults = resultsAB.GetBits();
+
             // do our multi bit addition! N bits + N bits = up to N+1 bit result.
             // Note that we can initialize our carry bit to the value 0.  we don't
             // need to initialize it to a superpositioned bit value!
+            /*
             TINT carryBit = 0;
             std::vector<TINT> adderResults;
             adderResults.resize(numBitsAdding+1);
@@ -45,6 +53,7 @@ int main(int argc, char **argv)
                 carryBit = carryBit % keysLCM;
             }
             adderResults[numBitsAdding] = carryBit;
+            */
 
             // show superpositional result and error (max and % of each key)
             std::cout << "\nSuperpositional Adder Result:\n\n";
@@ -103,3 +112,11 @@ int main(int argc, char **argv)
 
     ExitCode_(0);
 }
+
+/*
+TOOD:
+* make this use the CSuperInt abstraction
+* make it not require powers of 2 bits
+* can we move some of the results showing code to shared? multiply probably needs it too and others in the future
+* clean this code up
+*/

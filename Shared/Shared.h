@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+
+#define NOMINMAX
 #include <Windows.h> // for IsDebuggerPresent()
 
 #define ExitCode_(x) {if (IsDebuggerPresent()) {WaitForEnter();} return x;}
