@@ -15,6 +15,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KeyGenerator", "KeyGenerato
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shared", "Shared\Shared.vcxproj", "{D0F9CFEE-140E-4D0E-9F61-F3C8A1D9B9F6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Multiplier", "Multiplier\Multiplier.vcxproj", "{5CF300AE-6DC1-4E6C-A08B-E72EC0F2F9A9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D0F9CFEE-140E-4D0E-9F61-F3C8A1D9B9F6} = {D0F9CFEE-140E-4D0E-9F61-F3C8A1D9B9F6}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -33,6 +38,10 @@ Global
 		{D0F9CFEE-140E-4D0E-9F61-F3C8A1D9B9F6}.Debug|Win32.Build.0 = Debug|Win32
 		{D0F9CFEE-140E-4D0E-9F61-F3C8A1D9B9F6}.Release|Win32.ActiveCfg = Release|Win32
 		{D0F9CFEE-140E-4D0E-9F61-F3C8A1D9B9F6}.Release|Win32.Build.0 = Release|Win32
+		{5CF300AE-6DC1-4E6C-A08B-E72EC0F2F9A9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5CF300AE-6DC1-4E6C-A08B-E72EC0F2F9A9}.Debug|Win32.Build.0 = Debug|Win32
+		{5CF300AE-6DC1-4E6C-A08B-E72EC0F2F9A9}.Release|Win32.ActiveCfg = Release|Win32
+		{5CF300AE-6DC1-4E6C-A08B-E72EC0F2F9A9}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
