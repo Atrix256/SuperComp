@@ -5,16 +5,11 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include "Shared/Shared.h"
 
-#define USEPRIMES 0 // if 1, will use primes from file. else will calcuate co-primes
-
-#define PRIMENUMBERSTARTINDEX 26 // this is the first 3 digit prime number: 101
-#define SMALLESTKEYVALUE 10      // if not using prime numbers, this will be the smallest key
+#define SMALLESTKEYVALUE 10      // the smallest key will be the next odd number >= this
 
 //typedef int64_t TINT;
 //typedef boost::multiprecision::int128_t TINT;
 typedef boost::multiprecision::cpp_int TINT;
-
-std::vector<TINT> g_primeNumbers;
 
 //=================================================================================
 TINT ExtendedEuclidianAlgorithm (TINT smaller, TINT larger, TINT &s, TINT &t)
@@ -72,21 +67,6 @@ TINT ExtendedEuclidianAlgorithm (TINT smaller, TINT larger, TINT &s, TINT &t)
 }
 
 //=================================================================================
-void LoadPrimeNumbers ()
-{
-    #if USEPRIMES
-    FILE *file = fopen("primes-to-100k.txt", "rt");
-    if (file)
-    {
-        TINT value;
-        while (fscanf(file, "%I64d", &value) == 1)
-            g_primeNumbers.push_back(value);
-        fclose(file);
-    }
-    #endif
-}
-
-//=================================================================================
 TINT CalculateBit (size_t bitIndex, const std::vector<TINT> &keys, const std::vector<TINT> &coefficients, TINT keysLCM)
 {
     TINT ret = 0;
@@ -125,10 +105,8 @@ bool KeyIsCoprime (std::vector<TINT> &keys, size_t keyIndex, TINT& value)
 //=================================================================================
 void MakeKey (std::vector<TINT> &keys, size_t keyIndex)
 {
-#if USEPRIMES
-    keys[keyIndex] = g_primeNumbers[PRIMENUMBERSTARTINDEX + keyIndex];
-#else
-    TINT nextNumber = keyIndex > 0 ? (keys[keyIndex - 1] + 1) : TINT(SMALLESTKEYVALUE);
+    // make sure our keys are odd
+    TINT nextNumber = keyIndex > 0 ? (keys[keyIndex - 1] + 2) : TINT(SMALLESTKEYVALUE | 1);
     while (1)
     {
         if (KeyIsCoprime(keys, keyIndex, nextNumber))
@@ -136,9 +114,9 @@ void MakeKey (std::vector<TINT> &keys, size_t keyIndex)
             keys[keyIndex] = nextNumber;
             return;
         }
-        nextNumber++;
+
+        nextNumber+=2;
     }
-#endif
 }
 
 //=================================================================================
@@ -148,7 +126,7 @@ void CalculateBitsAndKeys (int numBits, std::vector<TINT> &superPositionedBits, 
     superPositionedBits.resize(size_t(numBits));
     keys.resize(size_t(1) << superPositionedBits.size());
 
-    // set our keys to prime numbers that aren't super tiny.  The smallest key
+    // set our keys to co prime numbers that aren't super tiny.  The smallest key
     // determines how much error we can tolerate building up, just like FHE over integers.
     keysLCM = 1;
     for (size_t i = 0, c = keys.size(); i < c; ++i)
@@ -204,34 +182,37 @@ bool TestResults (const std::vector<TINT> &superPositionedBits, const std::vecto
 //=================================================================================
 int main (int argc, char **argv)
 {
-    std::cout << "--KeyGenerator--\n\nGenerates superpositioned bit values and keys for use in superpositional\ncomputation using HE over the integers.\n\n";
-
-    // Load the prime numbers
-    LoadPrimeNumbers();
-
-    // find out how many bits to generate for
-    std::cout << "How many input bits are there in your circuit?\n";
+    // get and verify parameters
     int numBits;
-    scanf("%i", &numBits);
+    std::cout << "--KeyGenerator--\n\nGenerates superpositioned bit values and keys for use in superpositional\ncomputation using HE over the integers.\n\n";
+    if (argc < 3 || sscanf(argv[1], "%i", &numBits) != 1)
+    {
+        std::cout << "Usage: <numBits> <outputFile>\n";;
+        ExitCode_(1);
+    }
 
     // calculate superpositioned bits and keys
-    std::cout << "\nCalculating Values...\n";
+    std::cout << "Calculating values for " << numBits << " bits.\n";
     std::vector<TINT> superPositionedBits;
     std::vector<TINT> keys;
     TINT keysLCM;
     CalculateBitsAndKeys(numBits, superPositionedBits, keys, keysLCM);
 
-    // Verify our results
+    // Verify results
     std::cout << "Done.\n\nVerifying results...\n";
     if (!TestResults(superPositionedBits, keys))
+    {
         std::cout << "Results Invalid!!\n";
+        ExitCode_(1);
+    }
     std::cout << "Done.\n";
 
-    // Write results to results.txt
-    WriteBitsKeys("results.txt", superPositionedBits, keys);
-    std::cout << "\nResults written to results.txt\n";
-
-    // done
-    WaitForEnter();
-    return 0;
+    // Write results
+    if (!WriteBitsKeys(argv[2], superPositionedBits, keys))
+    {
+        std::cout << "\nCould not write results to " << argv[2] << "\n";
+        ExitCode_(1);
+    }
+    std::cout << "\nResults written to " << argv[2] << "\n";
+    ExitCode_(0);
 }

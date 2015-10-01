@@ -6,11 +6,19 @@ typedef boost::multiprecision::cpp_int TINT;
 //=================================================================================
 int main(int argc, char **argv)
 {
+    // verify parameters
+    std::cout << "--Adder--\n\nUses an input key file to add bits superpositionally and show results.\nRequires an even number of bits.\n\n";
+    if (argc < 2)
+    {
+        std::cout << "Usage: <inputFile>\n";;
+        ExitCode_(1);
+    }
+
     // read in the bits and keys if we can
     std::vector<TINT> superPositionedBits;
     std::vector<TINT> keys;
-    std::cout << "Loading results.txt\n";
-    if (ReadBitsKeys("results.txt", superPositionedBits, keys))
+    std::cout << "Loading " << argv[1] << "\n";
+    if (ReadBitsKeys(argv[1], superPositionedBits, keys))
     {
         // we need an even number of bits to do adding!
         if (superPositionedBits.size() % 2 == 0)
@@ -76,7 +84,8 @@ int main(int argc, char **argv)
                     if (result != a + b)
                     {
                         std::cout << "ERROR! incorrect value detected!";
-                        // TODO: assert or something
+                        // TODO: assert or something?
+                        ExitCode_(1);
                     }
                 }
             }
@@ -88,24 +97,21 @@ int main(int argc, char **argv)
     }
     else
     {
-        std::cout << "could not load file!\n";
+        std::cout << "could not load " << argv[1] << "\n";
+        ExitCode_(1);
     }
 
-    WaitForEnter();
-    return 0;
+    ExitCode_(0);
 }
 
 /*
 TODO:
 
-* make keygen take command line params for number of bits (and prime or not / min value?) instead of asking user for input.
-
 * make this program take command line params for the input file?
 
-! NEXT: something more time consuming or impressive.  Like shor's algorithm or who knows what else.  CORDIC math perhaps to calculate sine since it's branchless?
-
-! NEXT: multiplier? working towards full homomoprhism!
- * https://en.wikipedia.org/wiki/Binary_multiplier
-
-
+! NEXT:
+ * something more time consuming or impressive.  Like shor's algorithm or who knows what else.  CORDIC math perhaps to calculate sine since it's branchless?
+ * multiplier: https://en.wikipedia.org/wiki/Binary_multiplier
+ * divide / modulus: http://courses.cs.vt.edu/~cs1104/BuildingBlocks/divide.030.html
+ * can we do bootstrapping with superpositional keys? do we have to do one layer deeper of HE or something?
 */

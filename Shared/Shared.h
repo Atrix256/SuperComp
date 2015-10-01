@@ -3,6 +3,9 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <Windows.h> // for IsDebuggerPresent()
+
+#define ExitCode_(x) {if (IsDebuggerPresent()) {WaitForEnter();} return x;}
 
 void WaitForEnter ();
 
@@ -10,7 +13,7 @@ void WaitForEnter ();
 template <typename T>
 bool Decrypt (T key, T value)
 {
-    return ((T % T) % 2) == 1;
+    return ((T % key) % 2) == 1;
 }
 
 //=================================================================================
@@ -52,7 +55,7 @@ template <typename T>
 bool WriteBitsKeys (const char *fileName, const std::vector<T> &superPositionedBits, const std::vector<T> &keys)
 {
     std::ofstream file;
-    file.open("results.txt", std::ios::out | std::ios::trunc);
+    file.open(fileName, std::ios::out | std::ios::trunc);
 
     if (!file.is_open())
         return false;
@@ -77,7 +80,7 @@ template <typename T>
 bool ReadBitsKeys (const char *fileName, std::vector<T> &superPositionedBits, std::vector<T> &keys)
 {
     std::ifstream file;
-    file.open("results.txt");
+    file.open(fileName);
 
     if (!file.is_open())
         return false;
