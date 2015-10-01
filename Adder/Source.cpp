@@ -23,18 +23,12 @@ int main(int argc, char **argv)
     }
     std::cout << "file loaded!\n\n";
 
-    // Calculate the LCM of our keys so we can make results mod this LCM and keep numbers smaller
-    TINT keysLCM = 1;
-    for (const TINT& v : keys)
-        keysLCM *= v;
-
     // Do our superpositional math
     CSuperInt A(superPositionedBits.begin(), superPositionedBits.begin() + superPositionedBits.size() / 2, keys);
     CSuperInt B(superPositionedBits.begin() + superPositionedBits.size() / 2, superPositionedBits.end(), keys);
     CSuperInt resultsAB(keys);
     resultsAB = A + B;
-
-    std::cout << "Adding " << A.NumBits() << " bits and " << B.NumBits() << " bits to get a " << resultsAB.NumBits() << " bit result\n";
+    std::cout << "Added " << A.NumBits() << " bits and " << B.NumBits() << " bits to get a " << resultsAB.NumBits() << " bit result\n";
 
     // show superpositional result and error (max and % of each key)
     const std::vector<TINT> &adderResults = resultsAB.GetBits();
@@ -43,8 +37,8 @@ int main(int argc, char **argv)
 
     // Permute through results, make sure truth tables add up
     printf("Result Verification:\n");
-    bool success = PermuteResults2Inputs(A, B,
-        [&adderResults, &keys] (size_t a, size_t b, size_t keyIndex)
+    bool success = PermuteResults2Inputs(A, B, //resultsAB,
+        [&adderResults, &keys] (size_t a, size_t b, size_t keyIndex)// , size_t result)
         {
             // decode result for this specific key index
             size_t result = 0;
@@ -76,6 +70,7 @@ int main(int argc, char **argv)
 /*
 TOOD:
 * can the PermuteResults2Inputs function decode adderResults for us?
+? can "ReportBitsAndError" take a CSuperInt instead?
 
 * clean this code up
 * test with all the keys, even and odd, small and large
