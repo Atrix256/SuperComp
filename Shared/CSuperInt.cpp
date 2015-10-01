@@ -5,6 +5,32 @@
 TINT CSuperInt::s_zeroBit = 0;
 
 //=================================================================================
+template <typename T>
+static T XOR(T A, T B)
+{
+    return A + B;
+}
+
+//=================================================================================
+template <typename T>
+static T AND(T A, T B)
+{
+    return A * B;
+}
+
+//=================================================================================
+template <typename T>
+static T FullAdder (T A, T B, T &carryBit)
+{
+    // homomorphically add the encrypted bits A and B
+    // return the single bit sum, and put the carry bit into carryBit
+    // From http://en.wikipedia.org/w/index.php?title=Adder_(electronics)&oldid=381607326#Full_adder
+    T sumBit = XOR(XOR(A, B), carryBit);
+    carryBit = XOR(AND(A, B), AND(carryBit, XOR(A, B)));
+    return sumBit;
+}
+
+//=================================================================================
 CSuperInt::CSuperInt (const TINT &keysLCM) : m_keysLCM(keysLCM)
 {
 
@@ -41,7 +67,6 @@ CSuperInt CSuperInt::operator + (const CSuperInt &other) const
     CSuperInt result(m_keysLCM);
     size_t biggerSize = std::max(m_bits.size(), other.m_bits.size());
     result.m_bits.resize(biggerSize + 1);
-    TINT zero = 0;
     for (size_t i = 0; i < biggerSize; ++i)
     {
         const TINT &a = GetBit(i);

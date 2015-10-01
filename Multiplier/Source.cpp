@@ -115,11 +115,13 @@ int main(int argc, char **argv)
 
 /*
 TODO:
+* currently re-working adder, then come back to this
 * make this work
 * https://en.wikipedia.org/wiki/Binary_multiplier
 * put the add / multiply code in shared
  * eventually will abstract a type with operator overloads
 * remove adder / multiplier even bit count restriction
+* instead of calling it "TINT", could call it "CSuperBit" or something.
 
 ! NEXT:
  * divide / modulus: http://courses.cs.vt.edu/~cs1104/BuildingBlocks/divide.030.html

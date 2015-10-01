@@ -37,6 +37,10 @@ public:
     // Other
     const TINT& GetBit (size_t i) const;
 
+    size_t NumBits() const {
+        return m_bits.size();
+    }
+
     // TEMP!
     const std::vector<TINT>& GetBits() const {
         return m_bits;

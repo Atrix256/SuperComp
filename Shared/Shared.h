@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include "CSuperInt.h"
 
 #define NOMINMAX
 #include <Windows.h> // for IsDebuggerPresent()
@@ -10,47 +11,6 @@
 #define ExitCode_(x) {if (IsDebuggerPresent()) {WaitForEnter();} return x;}
 
 void WaitForEnter ();
-
-//=================================================================================
-template <typename T>
-bool Decrypt (T key, T value)
-{
-    return ((T % key) % 2) == 1;
-}
-
-//=================================================================================
-template <typename T>
-T Encrypt (T key, bool value)
-{
-    T ret = key + (value ? 1 : 0);
-    return ret;
-}
-
-//=================================================================================
-template <typename T>
-T XOR (T A, T B)
-{
-    return A + B;
-}
-
-//=================================================================================
-template <typename T>
-T AND (T A, T B)
-{
-    return A * B;
-}
-
-//=================================================================================
-template <typename T>
-T FullAdder (T A, T B, T &carryBit)
-{
-    // homomorphically add the encrypted bits A and B
-    // return the single bit sum, and put the carry bit into carryBit
-    // From http://en.wikipedia.org/w/index.php?title=Adder_(electronics)&oldid=381607326#Full_adder
-    T sumBit = XOR(XOR(A, B), carryBit);
-    carryBit = XOR(AND(A, B), AND(carryBit, XOR(A, B)));
-    return sumBit;
-}
 
 //=================================================================================
 template <typename T>
@@ -111,5 +71,44 @@ bool ReadBitsKeys (const char *fileName, std::vector<T> &superPositionedBits, st
 
     bool ret = !file.fail();
     file.close();
+    return ret;
+}
+
+//=================================================================================
+template <typename T>
+void ReportBitsAndError (const std::vector<T> &superPositionedBits, const std::vector<T> &keys)
+{
+    for (size_t i = 0, c = superPositionedBits.size(); i < c; ++i)
+    {
+        std::cout << "--Bit " << i << "--\n" << superPositionedBits[i] << "\n";
+
+        float maxError = 0.0f;
+        for (int keyIndex = 0, keyCount = keys.size(); keyIndex < keyCount; ++keyIndex)
+        {
+            float error = 100.0f * float(superPositionedBits[i] % keys[keyIndex]) / float(keys[keyIndex]);
+            if (error > maxError)
+                maxError = error;
+        }
+        std::cout << "Highest Error = " << std::setprecision(2) << maxError << "%\n\n";
+    }
+}
+
+//=================================================================================
+template <typename L>
+bool PermuteResults2Inputs (const CSuperInt &A, const CSuperInt &B, const L& lambda)
+{
+    bool ret = true;
+    size_t numABits = A.NumBits();
+    for (size_t b = 0, bc = (1 << B.NumBits()) - 1; b <= bc; ++b)
+    {
+        for (size_t a = 0, ac = (1 << A.NumBits()) - 1; a <= ac; ++a)
+        {
+            // get the index of our key for this specific set of inputs
+            size_t keyIndex = (b << numABits) | a;
+
+            // call the lambda!
+            ret = ret && lambda(a, b, keyIndex);
+        }
+    }
     return ret;
 }
