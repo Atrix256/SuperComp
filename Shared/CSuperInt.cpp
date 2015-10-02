@@ -69,6 +69,17 @@ CSuperInt::CSuperInt (
 }
 
 //=================================================================================
+size_t CSuperInt::Decode(const TINT& key) const
+{
+    // decode result for this specific key index
+    const std::vector<TINT> &bits = GetBits();
+    size_t result = 0;
+    for (size_t i = 0, c = bits.size(); i < c; ++i)
+        result = result | (size_t((bits[i] % key) % 2) << i);
+    return result;
+}
+
+//=================================================================================
 CSuperInt CSuperInt::operator + (const CSuperInt &other) const
 {
     // we initialize the carry bit to 0, not a superpositional value

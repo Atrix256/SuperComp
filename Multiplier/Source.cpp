@@ -61,6 +61,10 @@ int main(int argc, char **argv)
 TODO:
 * using 8 bits or higher gives wrong results at key 127 (high bit is 0 when it should be 1) with 11, 51 and 1001 as minkey! need to look into why.
  * make it spit out binary math it's doing, and check it by hand to see where it went wrong
+ * key is 733 in the error case of key 127 for keys8bits_11.txt
+ * i verified that each row makes sense.  it's 7+14+28+56.  It should come out to 105, but it's coming out to 41.  the "64" bit isn't being set.
+ * adding those numbers via my add routine in superbits comes up with the right answer, so it must be an error thing, yet 1001 isn't enough??
+  * need to dive deeper still to see what's going wrong.
 
 ! NEXT:
  * write up notes and put in repository, in a mergable file format (txt?)

@@ -33,6 +33,9 @@ public:
         const std::vector<TINT> keys
     );
 
+    // Encoding / Decoding
+    size_t Decode (const TINT& key) const;
+
     // Math Operators
     CSuperInt operator+ (const CSuperInt &other) const;
     CSuperInt operator* (const CSuperInt &other) const;

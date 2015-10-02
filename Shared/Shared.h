@@ -108,11 +108,8 @@ bool PermuteResults2Inputs (const CSuperInt &A, const CSuperInt &B, const CSuper
             // get the index of our key for this specific set of inputs
             size_t keyIndex = (b << numABits) | a;
 
-            // decode result for this specific key index
-            const std::vector<TINT> &superResultBits = superResult.GetBits();
-            size_t result = 0;
-            for (size_t i = 0, c = superResultBits.size(); i < c; ++i)
-                result = result | (size_t((superResultBits[i] % keys[keyIndex]) % 2) << i);
+            // decode result for this specific key
+            size_t result = superResult.Decode(keys[keyIndex]);
 
             // call the lambda!
             ret = ret && lambda(a, b, keyIndex, result);
