@@ -1,3 +1,11 @@
+//=================================================================================
+//
+//  CSuperInt
+//
+//  A superpositional integer, made up of a collection of superpositional bits
+//
+//=================================================================================
+
 #include "CSuperInt.h"
 #include "Shared.h"
 #include <algorithm>
@@ -77,6 +85,34 @@ CSuperInt CSuperInt::operator + (const CSuperInt &other) const
     *(result.m_bits.rbegin()) = carryBit;
 
     return result;
+}
+
+//=================================================================================
+CSuperInt CSuperInt::operator * (const CSuperInt &other) const
+{
+    // do multiplication like this:
+    // https://en.wikipedia.org/wiki/Binary_multiplier#Multiplication_basics
+    CSuperInt result(m_keysLCM);
+    for (size_t i = 0, c = m_bits.size(); i < c; ++i)
+    {
+        CSuperInt row = other;
+        for (TINT &v : row.m_bits)
+            v = AND(v, m_bits[i]);
+
+        row.ShiftLeft(i);
+        result = result + row;
+    }
+    return result;
+}
+
+//=================================================================================
+void CSuperInt::ShiftLeft (size_t amount)
+{
+    while (amount > 0)
+    {
+        m_bits.insert(m_bits.begin(), 0);
+        amount--;
+    }
 }
 
 //=================================================================================

@@ -11,6 +11,8 @@
 #include <vector>
 #include <boost/multiprecision/cpp_int.hpp>
 
+//typedef int64_t TINT;
+//typedef boost::multiprecision::int128_t TINT;
 typedef boost::multiprecision::cpp_int TINT;
 
 //=================================================================================
@@ -33,15 +35,17 @@ public:
 
     // Math Operators
     CSuperInt operator+ (const CSuperInt &other) const;
+    CSuperInt operator* (const CSuperInt &other) const;
 
-    // Other
+    void ShiftLeft (size_t amount);
+
+    // Bit Access
     const TINT& GetBit (size_t i) const;
 
     size_t NumBits() const {
         return m_bits.size();
     }
 
-    // TEMP!
     const std::vector<TINT>& GetBits() const {
         return m_bits;
     }

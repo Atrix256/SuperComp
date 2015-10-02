@@ -76,16 +76,18 @@ bool ReadBitsKeys (const char *fileName, std::vector<T> &superPositionedBits, st
 
 //=================================================================================
 template <typename T>
-void ReportBitsAndError (const std::vector<T> &superPositionedBits, const std::vector<T> &keys)
+void ReportBitsAndError (const CSuperInt &superInt, const std::vector<T> &keys)
 {
-    for (size_t i = 0, c = superPositionedBits.size(); i < c; ++i)
+    const std::vector<TINT> &bits = superInt.GetBits();
+
+    for (size_t i = 0, c = bits.size(); i < c; ++i)
     {
-        std::cout << "--Bit " << i << "--\n" << superPositionedBits[i] << "\n";
+        std::cout << "--Bit " << i << "--\n" << bits[i] << "\n";
 
         float maxError = 0.0f;
         for (int keyIndex = 0, keyCount = keys.size(); keyIndex < keyCount; ++keyIndex)
         {
-            float error = 100.0f * float(superPositionedBits[i] % keys[keyIndex]) / float(keys[keyIndex]);
+            float error = 100.0f * float(bits[i] % keys[keyIndex]) / float(keys[keyIndex]);
             if (error > maxError)
                 maxError = error;
         }
@@ -95,7 +97,7 @@ void ReportBitsAndError (const std::vector<T> &superPositionedBits, const std::v
 
 //=================================================================================
 template <typename L>
-bool PermuteResults2Inputs (const CSuperInt &A, const CSuperInt &B, const L& lambda)
+bool PermuteResults2Inputs (const CSuperInt &A, const CSuperInt &B, const CSuperInt &superResult, const std::vector<TINT> &keys, const L& lambda)
 {
     bool ret = true;
     size_t numABits = A.NumBits();
@@ -106,8 +108,14 @@ bool PermuteResults2Inputs (const CSuperInt &A, const CSuperInt &B, const L& lam
             // get the index of our key for this specific set of inputs
             size_t keyIndex = (b << numABits) | a;
 
+            // decode result for this specific key index
+            const std::vector<TINT> &superResultBits = superResult.GetBits();
+            size_t result = 0;
+            for (size_t i = 0, c = superResultBits.size(); i < c; ++i)
+                result = result | (size_t((superResultBits[i] % keys[keyIndex]) % 2) << i);
+
             // call the lambda!
-            ret = ret && lambda(a, b, keyIndex);
+            ret = ret && lambda(a, b, keyIndex, result);
         }
     }
     return ret;

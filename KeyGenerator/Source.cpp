@@ -2,14 +2,9 @@
 #include <algorithm>
 #include <array>
 #include <vector>
-#include <boost/multiprecision/cpp_int.hpp>
 #include "Shared/Shared.h"
 
 #define SMALLESTKEYVALUE 10      // the smallest key will be the next odd number >= this
-
-//typedef int64_t TINT;
-//typedef boost::multiprecision::int128_t TINT;
-typedef boost::multiprecision::cpp_int TINT;
 
 //=================================================================================
 TINT ExtendedEuclidianAlgorithm (TINT smaller, TINT larger, TINT &s, TINT &t)
