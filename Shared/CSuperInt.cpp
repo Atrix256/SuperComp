@@ -13,27 +13,30 @@
 TINT CSuperInt::s_zeroBit = 0;
 
 //=================================================================================
-template <typename T>
-static T XOR(T A, T B)
+static TINT XOR (const TINT &A, const TINT &B)
 {
     return A + B;
 }
 
 //=================================================================================
-template <typename T>
-static T AND(T A, T B)
+static TINT AND (const TINT &A, const TINT &B)
 {
     return A * B;
 }
 
 //=================================================================================
-template <typename T>
-static T FullAdder (T A, T B, T &carryBit)
+static TINT NOT (const TINT &A)
+{
+    return XOR(A, TINT(1));
+}
+
+//=================================================================================
+static TINT FullAdder (const TINT &A, const TINT &B, TINT &carryBit)
 {
     // homomorphically add the encrypted bits A and B
     // return the single bit sum, and put the carry bit into carryBit
     // From http://en.wikipedia.org/w/index.php?title=Adder_(electronics)&oldid=381607326#Full_adder
-    T sumBit = XOR(XOR(A, B), carryBit);
+    TINT sumBit = XOR(XOR(A, B), carryBit);
     carryBit = XOR(AND(A, B), AND(carryBit, XOR(A, B)));
     return sumBit;
 }
@@ -136,4 +139,6 @@ const TINT& CSuperInt::GetBit (size_t i) const
 TODO:
 * assert that the m_keysLCM are the same value when doing math against multiple CSuperInts?
  * could also make it a static of CSuperInt perhaps, but that isn't so great.
+* if doing bootstrapping or modulus switching, might eventually need to make it store the whole key instead of just LCM.
+ * could have a ref counted (shared ptr) key object at that point perhaps, which also has LCM inside?
 */

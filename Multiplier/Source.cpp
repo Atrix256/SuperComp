@@ -59,15 +59,19 @@ int main(int argc, char **argv)
 
 /*
 TODO:
-* using 8 bits or higher gives wrong results. need to look into why. error?
-* how to do signed add / multiply?
- * multiply is easy... xor sign bit.
- * add = ?? can't do two's compliment, unless we also want to change multiply. Also our ints are unbounded. high bit = ???
-* make SMALLESTKEYVALUE be a command line parameter for key generator
-
+* using 8 bits or higher gives wrong results at key 127 (high bit is 0 when it should be 1) with 11, 51 and 1001 as minkey! need to look into why.
+ * make it spit out binary math it's doing, and check it by hand to see where it went wrong
 
 ! NEXT:
+ * write up notes and put in repository, in a mergable file format (txt?)
  * divide / modulus: http://courses.cs.vt.edu/~cs1104/BuildingBlocks/divide.030.html
+ * figure out signed add and then make an adder subtractor
+  * does CSuperInt need a CSuperUINT version? or just always do signed? probably always signed.
+  * uint add is cheaper but multiply is moreso, so not the bottleneck
+  * altgough multiply probably wants unsigned add, and then we use XOR of input sign bits to get proper sign bit of result.
+ * evaluate a polynomial, like 3x^2+5x+3?
+  * is there any way to easily find what key would make the result be zero? like binary search key space or something? probably not, but could be interesting if so, for solving equations.
+ * a little nuts, but you could do dual numbers homomorphically too for automatic differentiation...
  * something more time consuming or impressive.  Like shor's algorithm or who knows what else.  CORDIC math perhaps to calculate sine since it's branchless?
  * can we do bootstrapping with superpositional keys? do we have to do one layer deeper of HE or something?
 */

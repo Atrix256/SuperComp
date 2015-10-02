@@ -4,8 +4,6 @@
 #include <vector>
 #include "Shared/Shared.h"
 
-#define SMALLESTKEYVALUE 10      // the smallest key will be the next odd number >= this
-
 //=================================================================================
 TINT ExtendedEuclidianAlgorithm (TINT smaller, TINT larger, TINT &s, TINT &t)
 {
@@ -98,10 +96,10 @@ bool KeyIsCoprime (std::vector<TINT> &keys, size_t keyIndex, TINT& value)
 }
 
 //=================================================================================
-void MakeKey (std::vector<TINT> &keys, size_t keyIndex)
+void MakeKey (std::vector<TINT> &keys, size_t keyIndex, size_t minKey)
 {
     // make sure our keys are odd
-    TINT nextNumber = keyIndex > 0 ? (keys[keyIndex - 1] + 2) : TINT(SMALLESTKEYVALUE | 1);
+    TINT nextNumber = keyIndex > 0 ? (keys[keyIndex - 1] + 2) : TINT(minKey | 1);
     while (1)
     {
         if (KeyIsCoprime(keys, keyIndex, nextNumber))
@@ -115,7 +113,7 @@ void MakeKey (std::vector<TINT> &keys, size_t keyIndex)
 }
 
 //=================================================================================
-void CalculateBitsAndKeys (int numBits, std::vector<TINT> &superPositionedBits, std::vector<TINT> &keys, TINT &keysLCM)
+void CalculateBitsAndKeys (int numBits, std::vector<TINT> &superPositionedBits, std::vector<TINT> &keys, TINT &keysLCM, size_t minKey)
 {
     // size our arrays
     superPositionedBits.resize(size_t(numBits));
@@ -126,7 +124,7 @@ void CalculateBitsAndKeys (int numBits, std::vector<TINT> &superPositionedBits, 
     keysLCM = 1;
     for (size_t i = 0, c = keys.size(); i < c; ++i)
     {
-        MakeKey(keys, i);
+        MakeKey(keys, i, minKey);
         keysLCM *= keys[i];
     }
 
@@ -178,11 +176,11 @@ bool TestResults (const std::vector<TINT> &superPositionedBits, const std::vecto
 int main (int argc, char **argv)
 {
     // get and verify parameters
-    int numBits;
+    size_t numBits, minKey;
     std::cout << "--KeyGenerator--\n\nGenerates superpositioned bit values and keys for use in superpositional\ncomputation using HE over the integers.\n\n";
-    if (argc < 3 || sscanf(argv[1], "%i", &numBits) != 1)
+    if (argc < 4 || sscanf(argv[1], "%i", &numBits) != 1 || sscanf(argv[2], "%i", &minKey) != 1)
     {
-        std::cout << "Usage: <numBits> <outputFile>\n";;
+        std::cout << "Usage: <numBits> <minKey> <outputFile>\n";;
         ExitCode_(1);
     }
 
@@ -191,7 +189,7 @@ int main (int argc, char **argv)
     std::vector<TINT> superPositionedBits;
     std::vector<TINT> keys;
     TINT keysLCM;
-    CalculateBitsAndKeys(numBits, superPositionedBits, keys, keysLCM);
+    CalculateBitsAndKeys(numBits, superPositionedBits, keys, keysLCM, minKey);
 
     // Verify results
     std::cout << "Done.\n\nVerifying results...\n";
@@ -203,11 +201,11 @@ int main (int argc, char **argv)
     std::cout << "Done.\n";
 
     // Write results
-    if (!WriteBitsKeys(argv[2], superPositionedBits, keys))
+    if (!WriteBitsKeys(argv[3], superPositionedBits, keys))
     {
-        std::cout << "\nCould not write results to " << argv[2] << "\n";
+        std::cout << "\nCould not write results to " << argv[3] << "\n";
         ExitCode_(1);
     }
-    std::cout << "\nResults written to " << argv[2] << "\n";
+    std::cout << "\nResults written to " << argv[3] << "\n";
     ExitCode_(0);
 }
