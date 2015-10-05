@@ -10,19 +10,50 @@
 #include "Shared.h"
 #include <algorithm>
 #include "CKeySet.h"
+#include "Settings.h"
 
 TINT CSuperInt::s_zeroBit = 0;
 
 //=================================================================================
 static TINT XOR (const TINT &A, const TINT &B)
 {
-    return A + B;
+    #if CHECK_BITOPS()
+        int residueA = TINT((A % CHECK_BITOPS_KEY())).convert_to <int>();
+        int residueB = TINT((B % CHECK_BITOPS_KEY())).convert_to <int>();
+        bool decodedA = !!(residueA % 2);
+        bool decodedB = !!(residueB % 2);
+        bool desiredResult = decodedA ^ decodedB;
+    #endif
+
+    TINT result = A + B;
+
+    #if CHECK_BITOPS()
+        bool decodedResult = !!(TINT((result % CHECK_BITOPS_KEY()) % 2).convert_to<int>());
+        Assert_(desiredResult == decodedResult);
+    #endif
+
+    return result;
 }
 
 //=================================================================================
 static TINT AND (const TINT &A, const TINT &B)
 {
-    return A * B;
+    #if CHECK_BITOPS()
+        int residueA = TINT((A % CHECK_BITOPS_KEY())).convert_to <int>();
+        int residueB = TINT((B % CHECK_BITOPS_KEY())).convert_to <int>();
+        bool decodedA = !!(residueA % 2);
+        bool decodedB = !!(residueB % 2);
+        bool desiredResult = decodedA && decodedB;
+    #endif
+
+    TINT result = A * B;
+
+    #if CHECK_BITOPS()
+        bool decodedResult = !!(TINT((result % CHECK_BITOPS_KEY()) % 2).convert_to<int>());
+        Assert_(desiredResult == decodedResult);
+    #endif
+
+    return result;
 }
 
 //=================================================================================
@@ -132,6 +163,7 @@ CSuperInt CSuperInt::operator * (const CSuperInt &other) const
             v = AND(v, m_bits[i]);
 
         row.ShiftLeft(i);
+
         result = result + row;
     }
     return result;
@@ -155,12 +187,3 @@ const TINT& CSuperInt::GetBit (size_t i) const
 
     return s_zeroBit;
 }
-
-/*
-TODO:
-* assert that the key set pointer is the same value when doing math against multiple CSuperInts?
- * could also make it a static of CSuperInt perhaps, but that isn't so great.
-* make a define to turn on or off checking of each basic operation (AND / XOR) for each key.
- * assert if there's a failure, specifying which key(s) hit the problems?
- * so the minkey can be increased
-*/

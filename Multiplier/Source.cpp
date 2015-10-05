@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 
     if (!success)
     {
-        // TODO: assert or something?
+        Assert_(success);
         ExitCode_(1);
     }
 
@@ -59,13 +59,12 @@ int main(int argc, char **argv)
 
 /*
 TODO:
-* using 8 bits or higher gives wrong results at key 127 (high bit is 0 when it should be 1) with 11, 51 and 1001 as minkey! need to look into why.
- * make it spit out binary math it's doing, and check it by hand to see where it went wrong
- * key is 733 in the error case of key 127 for keys8bits_11.txt
- * i verified that each row makes sense.  it's 7+14+28+56.  It should come out to 105, but it's coming out to 41.  the "64" bit isn't being set.
- * adding those numbers via my add routine in superbits comes up with the right answer, so it must be an error thing, yet 1001 isn't enough??
-  * need to dive deeper still to see what's going wrong.
-* gather up TODO's from all files.
+? using 8 bits with "keys8bits_10000001.txt" works, but at the end, the last bit has 77% error, while the next bit has only 0.76% error. why does the last bit always have so much error? look into it!
+* signed math (multiplication / addition) with twos complement
+ * iterate through the superpositions with negative values as well
+* make a suntractor project?
+* assert in CSuperInt that the key set pointer is the same value when doing math against multiple CSuperInts?
+ * could also make it a static of CSuperInt perhaps, but that isn't so great.
 
 ! NEXT:
  * write up notes and put in repository, in a mergable file format (txt?)
@@ -83,4 +82,5 @@ TODO:
  * RECRYPT: how to do this?
   * could decrypt all permutations then maybe re-calculate numbers that fit those bounds and continue
   * problem: could be lots of permutations and take a while. what would the benefit be?
+? is there a way to figure out how big the smallest key needs to be, to keep it from overflowing for a given circuit?
 */

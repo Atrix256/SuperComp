@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 
     if (!success)
     {
-        // TODO: assert or something?
+        Assert_(success);
         ExitCode_(1);
     }
 

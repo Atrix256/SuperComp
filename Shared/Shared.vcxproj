@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClInclude Include="CKeySet.h" />
     <ClInclude Include="CSuperInt.h" />
+    <ClInclude Include="Settings.h" />
     <ClInclude Include="Shared.h" />
   </ItemGroup>
   <ItemGroup>
