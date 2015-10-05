@@ -1,4 +1,5 @@
 #include "Shared/Shared.h"
+#include "Shared/CKeySet.h"
 
 //=================================================================================
 int main(int argc, char **argv)
@@ -12,10 +13,9 @@ int main(int argc, char **argv)
     }
 
     // read in the bits and keys if we can
-    std::vector<TINT> superPositionedBits;
-    std::vector<TINT> keys;
+    std::shared_ptr<CKeySet> keySet = std::make_shared<CKeySet>();
     std::cout << "Loading " << argv[1] << "\n";
-    if (!ReadBitsKeys(argv[1], superPositionedBits, keys))
+    if (!keySet->Read(argv[1]))
     {
         std::cout << "could not load!\n";
         ExitCode_(1);
@@ -23,22 +23,22 @@ int main(int argc, char **argv)
     std::cout << "file loaded!\n\n";
 
     // Do our superpositional math
-    CSuperInt A(superPositionedBits.begin(), superPositionedBits.begin() + superPositionedBits.size() / 2, keys);
-    CSuperInt B(superPositionedBits.begin() + superPositionedBits.size() / 2, superPositionedBits.end(), keys);
-    CSuperInt resultsAB(keys);
+    CSuperInt A(keySet->GetSuperPositionedBits().begin(), keySet->GetSuperPositionedBits().begin() + keySet->GetSuperPositionedBits().size() / 2, keySet);
+    CSuperInt B(keySet->GetSuperPositionedBits().begin() + keySet->GetSuperPositionedBits().size() / 2, keySet->GetSuperPositionedBits().end(), keySet);
+    CSuperInt resultsAB(keySet);
     resultsAB = A + B;
     std::cout << "Added " << A.NumBits() << " bits and " << B.NumBits() << " bits to get a " << resultsAB.NumBits() << " bit result\n\n";
 
     // show superpositional result and error (max and % of each key)
-    ReportBitsAndError(resultsAB, keys);
+    ReportBitsAndError(resultsAB);
 
     // Permute through results, make sure truth tables add up
     printf("Result Verification:\n");
-    bool success = PermuteResults2Inputs(A, B, resultsAB, keys,
-        [] (size_t a, size_t b, size_t keyIndex, size_t result)
+    bool success = PermuteResults2Inputs(A, B, resultsAB, A.GetKeySet().GetKeys(),
+        [](size_t a, size_t b, size_t keyIndex, const TINT &key, size_t result)
         {
             // show and verify the result
-            std::cout << "  [" << keyIndex << "]  " << a << " + " << b << " = " << result << "\n";
+            std::cout << "  [" << keyIndex << "] (" << key << ")  " << a << " + " << b << " = " << result << "\n";
             if (result != a + b)
             {
                 std::cout << "ERROR! incorrect value detected!";

@@ -11,10 +11,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CKeySet.h" />
     <ClInclude Include="CSuperInt.h" />
     <ClInclude Include="Shared.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CKeySet.cpp" />
     <ClCompile Include="CSuperInt.cpp" />
     <ClCompile Include="Shared.cpp" />
   </ItemGroup>
