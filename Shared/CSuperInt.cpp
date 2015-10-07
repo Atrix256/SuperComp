@@ -98,9 +98,23 @@ static TINT FullAdder (const TINT &A, const TINT &B, TINT &carryBit)
 }
 
 //=================================================================================
-CSuperInt::CSuperInt(const std::shared_ptr<CKeySet> &keySet) : m_keySet(keySet)
+CSuperInt::CSuperInt (const std::shared_ptr<CKeySet> &keySet) : m_keySet(keySet)
 {
 
+}
+
+//=================================================================================
+CSuperInt::CSuperInt (int value, const std::shared_ptr<CKeySet> & keySet) : m_keySet(keySet)
+{
+    // we want the raw bit representation
+    unsigned int uvalue = (unsigned int)value;
+
+    // make the non superpositional binary representation of this value
+    while (uvalue)
+    {
+        m_bits.push_back((uvalue & 1) ? 1 : 0);
+        uvalue = uvalue >> 1;
+    }
 }
 
 //=================================================================================

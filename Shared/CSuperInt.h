@@ -23,8 +23,11 @@ class CKeySet;
 class CSuperInt
 {
 public:
-    // initialize to zero
+    // initialize to zero (empty bits)
     CSuperInt (const std::shared_ptr<CKeySet> &keySet);
+
+    // initialize to a non superpositional value. Totally valid and legal to mix!
+    CSuperInt (int value, const std::shared_ptr<CKeySet> & keySet);
 
     // initialize to a range of a vector of superpositional bits, and keys to
     // calculate LCM
