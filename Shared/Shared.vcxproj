@@ -19,6 +19,7 @@
   <ItemGroup>
     <ClCompile Include="CKeySet.cpp" />
     <ClCompile Include="CSuperInt.cpp" />
+    <ClCompile Include="Settings.cpp" />
     <ClCompile Include="Shared.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

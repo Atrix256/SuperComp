@@ -59,15 +59,14 @@ int main(int argc, char **argv)
 
 /*
 TODO:
-? using 8 bits with "keys8bits_10000001.txt" works, but at the end, the last bit has 77% error, while the next bit has only 0.76% error. why does the last bit always have so much error? look into it!
 * signed math (multiplication / addition) with twos complement
  * iterate through the superpositions with negative values as well
-* make a suntractor project?
+* make a subtractor project?
 * assert in CSuperInt that the key set pointer is the same value when doing math against multiple CSuperInts?
  * could also make it a static of CSuperInt perhaps, but that isn't so great.
+* is there a way to calculate the key value you'd need to pass through a given circuit?
 
 ! NEXT:
- * write up notes and put in repository, in a mergable file format (txt?)
  * divide / modulus: http://courses.cs.vt.edu/~cs1104/BuildingBlocks/divide.030.html
  * figure out signed add and then make an adder subtractor
   * does CSuperInt need a CSuperUINT version? or just always do signed? probably always signed.
@@ -77,10 +76,7 @@ TODO:
   * is there any way to easily find what key would make the result be zero? like binary search key space or something? probably not, but could be interesting if so, for solving equations.
  * a little nuts, but you could do dual numbers homomorphically too for automatic differentiation...
  * something more time consuming or impressive.  Like shor's algorithm or who knows what else.  CORDIC math perhaps to calculate sine since it's branchless?
- * can we do bootstrapping with superpositional keys? do we have to do one layer deeper of HE or something?
- * could eventually do a fixed point abstraction class.
  * RECRYPT: how to do this?
   * could decrypt all permutations then maybe re-calculate numbers that fit those bounds and continue
   * problem: could be lots of permutations and take a while. what would the benefit be?
-? is there a way to figure out how big the smallest key needs to be, to keep it from overflowing for a given circuit?
 */
