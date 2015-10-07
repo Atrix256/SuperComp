@@ -22,7 +22,8 @@ public:
 
     const std::vector<TINT> &GetSuperPositionedBits () const { return m_superPositionedBits; }
     const std::vector<TINT> &GetKeys () const { return m_keys; }
-    const TINT & GetKeysLCM() const { return m_keysLCM; }
+
+    void ReduceValue (TINT& v) const { v = v % m_keysLCM; }
 
 private:
     void MakeKey (size_t keyIndex, size_t minKey);

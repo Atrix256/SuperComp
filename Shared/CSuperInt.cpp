@@ -15,7 +15,7 @@
 TINT CSuperInt::s_zeroBit = 0;
 
 //=================================================================================
-static TINT XOR (const TINT &A, const TINT &B)
+static TINT XOR (const TINT &A, const TINT &B, const CKeySet &keySet)
 {
     #if CHECK_BITOPS()
         int residueA = TINT((A % CHECK_BITOPS_KEY())).convert_to<int>();
@@ -26,6 +26,7 @@ static TINT XOR (const TINT &A, const TINT &B)
     #endif
 
     TINT result = A + B;
+    keySet.ReduceValue(result);
 
     #if CHECK_BITOPS()
         int residueResult = TINT((result % CHECK_BITOPS_KEY())).convert_to<int>();
@@ -40,7 +41,7 @@ static TINT XOR (const TINT &A, const TINT &B)
 }
 
 //=================================================================================
-static TINT AND (const TINT &A, const TINT &B)
+static TINT AND(const TINT &A, const TINT &B, const CKeySet &keySet)
 {
     #if CHECK_BITOPS()
         int residueA = TINT((A % CHECK_BITOPS_KEY())).convert_to<int>();
@@ -51,6 +52,7 @@ static TINT AND (const TINT &A, const TINT &B)
     #endif
 
     TINT result = A * B;
+    keySet.ReduceValue(result);
 
     #if CHECK_BITOPS()
         int residueResult = TINT((result % CHECK_BITOPS_KEY())).convert_to<int>();
@@ -65,14 +67,14 @@ static TINT AND (const TINT &A, const TINT &B)
 }
 
 //=================================================================================
-static TINT NOT (const TINT &A)
+static TINT NOT (const TINT &A, const CKeySet &keySet)
 {
     CHECK_BITOPS_LOG_INDENT("Not");
-    return XOR(A, TINT(1));
+    return XOR(A, TINT(1), keySet);
 }
 
 //=================================================================================
-static TINT FullAdder (const TINT &A, const TINT &B, TINT &carryBit)
+static TINT FullAdder(const TINT &A, const TINT &B, TINT &carryBit, const CKeySet &keySet)
 {
     CHECK_BITOPS_LOG_INDENT("FullAdder");
     // homomorphically add the encrypted bits A and B
@@ -82,14 +84,14 @@ static TINT FullAdder (const TINT &A, const TINT &B, TINT &carryBit)
 
     {
         CHECK_BITOPS_LOG_INDENT("SumBit");
-        sumBit = XOR(XOR(A, B), carryBit);
+        sumBit = XOR(XOR(A, B, keySet), carryBit, keySet);
         #if CHECK_BITOPS_LOG()
             std::cout << s_bitOpsLogIndent << "SumBit = " << TINT(sumBit % CHECK_BITOPS_KEY()).convert_to<int>() << "\n";
         #endif
     }
     {
         CHECK_BITOPS_LOG_INDENT("CarryBit");
-        carryBit = XOR(AND(A, B), AND(carryBit, XOR(A, B)));
+        carryBit = XOR(AND(A, B, keySet), AND(carryBit, XOR(A, B, keySet), keySet), keySet);
         #if CHECK_BITOPS_LOG()
             std::cout << s_bitOpsLogIndent << "CarryBit = " << TINT(carryBit % CHECK_BITOPS_KEY()).convert_to<int>() << "\n";
         #endif
@@ -197,8 +199,7 @@ CSuperInt CSuperInt::operator + (const CSuperInt &other) const
         #endif
         const TINT &a = GetBit(i);
         const TINT &b = other.GetBit(i);
-        result.m_bits[i] = FullAdder(a, b, carryBit) % m_keySet->GetKeysLCM();
-        carryBit = carryBit % m_keySet->GetKeysLCM();
+        result.m_bits[i] = FullAdder(a, b, carryBit, *m_keySet);
     }
     *(result.m_bits.rbegin()) = carryBit;
 
@@ -240,7 +241,7 @@ CSuperInt CSuperInt::operator * (const CSuperInt &other) const
                 CHECK_BITOPS_LOG_INDENT(scopeName);
             #endif
             for (TINT &v : row.m_bits)
-                v = AND(v, m_bits[i]);
+                v = AND(v, m_bits[i], *m_keySet);
         }
 
         row.ShiftLeft(i);
