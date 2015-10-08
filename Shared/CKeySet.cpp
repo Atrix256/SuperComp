@@ -103,6 +103,9 @@ bool CKeySet::Read (const char *fileName)
     for (const TINT& v : m_keys)
         m_keysLCM *= v;
 
+    // we will reduce numbers since we have an LCM
+    m_reduce = true;
+
     return ret;
 }
 
@@ -165,6 +168,9 @@ void CKeySet::Calculate (int numBits, size_t minKey)
     // calculate each x value
     for (size_t i = 0, c = m_superPositionedBits.size(); i < c; ++i)
         m_superPositionedBits[i] = CalculateBit(i, coefficients);
+
+    // we will reduce numbers since we have an LCM
+    m_reduce = true;
 }
 
 //=================================================================================

@@ -13,7 +13,7 @@
 class CKeySet
 {
 public:
-    CKeySet() {}
+    CKeySet() : m_reduce(false) {}
 
     bool Read (const char *fileName);
     bool Write (const char *fileName) const;
@@ -23,7 +23,7 @@ public:
     const std::vector<TINT> &GetSuperPositionedBits () const { return m_superPositionedBits; }
     const std::vector<TINT> &GetKeys () const { return m_keys; }
 
-    void ReduceValue (TINT& v) const { v = v % m_keysLCM; }
+    void ReduceValue (TINT& v) const { if (m_reduce) { v = v % m_keysLCM; } }
 
 private:
     void MakeKey (size_t keyIndex, size_t minKey);
@@ -34,4 +34,5 @@ private:
     std::vector<TINT>   m_superPositionedBits;
     std::vector<TINT>   m_keys;
     TINT                m_keysLCM;
+    bool                m_reduce;
 };
