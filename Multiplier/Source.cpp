@@ -1,6 +1,9 @@
 #include "Shared/Shared.h"
 #include "Shared/CKeySet.h"
 
+// TODO: generalize this as a command line (or otherwise).  make it available to all demos
+#define VERIFY_RESULT() 1
+
 //=================================================================================
 int main(int argc, char **argv)
 {
@@ -22,8 +25,10 @@ int main(int argc, char **argv)
     }
     std::cout << "file loaded!\n\n";
 
-    /*
+    // TODO: make this code be activated with some command line param.
     // TODO: TEMP - find out the key size we need for a 4 bit vs 4 bit multiply
+    // TODO: generalize this so other demos can use it too. command line or something?
+    /*
     std::shared_ptr<CKeySet> exploreKeys = std::make_shared<CKeySet>();
     CSuperInt exploreA(15, exploreKeys);
     CSuperInt exploreB(15, exploreKeys);
@@ -50,27 +55,70 @@ int main(int argc, char **argv)
     // show superpositional result and error (max and % of each key)
     ReportBitsAndError(resultsAB);
 
-    // Permute through results, make sure truth tables add up
-    printf("Result Verification:\n");
-    bool success = PermuteResults2Inputs(A, B, resultsAB, A.GetKeySet().GetKeys(),
-        [](size_t a, size_t b, size_t keyIndex, const TINT &key, size_t result)
-    {
-        // show and verify the result
-        std::cout << "  [" << keyIndex << "] (" << key << ")  " << a << " * " << b << " * 8 = " << result << "\n";
-        if (result != a * b * 8)
-        {
-            std::cout << "ERROR! incorrect value detected!";
-            return false;
-        }
-        return true;
-    }
-    );
+    #if VERIFY_RESULT()
+        // Permute and verify results
+        printf("Result Verification:\n");
+        bool success = PermuteResults2Inputs(A, B, resultsAB, A.GetKeySet().GetKeys(),
+            [&resultsAB, &keySet] (size_t a, size_t b, size_t keyIndex, const TINT &key, size_t result)
+            {
+                // Show and verify the result
+                std::cout << "  [" << keyIndex << "] (" << key << ")  " << a << " * " << b << " * 8 = " << result << "\n";
+                if (result != a * b * 8)
+                {
+                    std::cout << "ERROR! Incorrect value detected!";
+                    return false;
+                }
 
-    if (!success)
-    {
-        Assert_(success);
-        ExitCode_(1);
-    }
+                // ensure that the key was large enough, despite us getting the right answer
+                // TODO: why does this happen?
+                {
+                    std::shared_ptr<CKeySet> exploreKeys = std::make_shared<CKeySet>();
+                    CSuperInt exploreA(a, exploreKeys);
+                    CSuperInt exploreB(b, exploreKeys);
+                    CSuperInt exploreResult = exploreA * exploreB;
+
+                    TINT maxValue = 0;
+                    for (const TINT &v : exploreResult.GetBits())
+                    {
+                        if (v > maxValue)
+                            maxValue = v;
+                    }
+
+                    if (maxValue >= key)
+                    {
+                        std::cout << "  ERROR! value greater than key (" << maxValue << ")\n";
+
+                        for (const TINT &v : exploreResult.GetBits())
+                        {
+                            TINT div = v / key;
+                            std::cout << "    +" << div << "\n";
+                        }
+                        for (const TINT &v : keySet->GetSuperPositionedBits())
+                        {
+                            TINT div = v / key;
+                            std::cout << "    value(" << v << ")\n";
+                            std::cout << "    key(" << key << ")\n";
+                            std::cout << "    div(" << div << ")\n";
+                        }
+
+                        // TODO: div difference needs to be even? show div difference?
+
+                        int ijkl = 0;
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        );
+
+        if (!success)
+        {
+            Assert_(success);
+            ExitCode_(1);
+        }
+
+    #endif
 
     ExitCode_(0);
 }
@@ -83,11 +131,18 @@ TODO:
  * paper notes: this isn't garaunteed to be the smallest set of keys that could pass through the circuit though.
   * both unused circuit paths (an overflow being ANDED by zero)
   * as well as the fact that the largest key required doesn't line up with the key 0. diff keys may require diff sizes.
+  ? also perhaps, if something overflows always an even number of times, that'd be ok. (how to quantify?)
+  ? maybe the thing about output GCD?
  ! this seems like it might not be right.  for 4 bits and 4 bits it's telling me 127733759, but the key 10000001 for 8 bits works just fine.
  ? if it isn't right, why does the smaller key work? maybe there's something more to that... like it overflows an even number of times so we are ok??
   * maybe look w/ debugging again and see what's going on with the max key.
   * i think this has something to do with modulus against LCM not happening, so this isn't the real number, the modulus of some other number is the real number.
   * not real sure how to calculate the right key then...
+
+* move ExtendedEuclidianAlgorithm into a utils file if going to be keeping it global.
+ * or, make the code you are writing be part of the key set internal functionality! this is probably the better thing to do since it calculates requirements for the keyset.
+
+* unsigned numbers might be good enough. unless there was a reason signed was better? subtraction maybe?
 
 ? why does multiplying by a constant add a 0 on the high side? need to fix that, it'll mess with signed numbers
  * multiply 3 by 1 and see the results are 011. multiplication order matters
