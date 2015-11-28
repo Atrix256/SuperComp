@@ -8,7 +8,8 @@
 
 #pragma once
 
-#include "CSuperInt.h"
+#include "TINT.h"
+#include <functional>
 
 class CKeySet
 {
@@ -18,7 +19,8 @@ public:
     bool Read (const char *fileName);
     bool Write (const char *fileName) const;
 
-    void Calculate (int numBits, size_t minKey);
+    void CalculateCached (int numBits, const TINT& minKey, const std::function<void (uint8_t percent)>& progressCallback = [] (uint8_t percent) {} );
+    void Calculate (int numBits, const TINT& minKey, const std::function<void (uint8_t percent)>& progressCallback = [] (uint8_t percent) {} );
 
     const std::vector<TINT> &GetSuperPositionedBits () const { return m_superPositionedBits; }
     const std::vector<TINT> &GetKeys () const { return m_keys; }
@@ -26,7 +28,7 @@ public:
     void ReduceValue (TINT& v) const { if (m_reduce) { v = v % m_keysLCM; } }
 
 private:
-    void MakeKey (size_t keyIndex, size_t minKey);
+    void MakeKey (size_t keyIndex);
     bool KeyIsCoprime (size_t keyIndex, TINT& value) const;
     TINT CalculateBit (size_t bitIndex, const std::vector<TINT> &coefficients) const;
 

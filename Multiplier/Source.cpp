@@ -1,179 +1,137 @@
 #include "Shared/Shared.h"
 #include "Shared/CKeySet.h"
 
-// TODO: generalize this as a command line (or otherwise).  make it available to all demos
-#define VERIFY_RESULT() 1
+typedef CSuperInt<3> TSuperInt;
+
+//=================================================================================
+template <typename T>
+T DoFunction (T& a, T& b)
+{
+    return a / b;
+}
+
+//=================================================================================
+const char* FunctionOperator ()
+{
+    return " / ";
+}
+
+//=================================================================================
+bool RightSideCanBeZero ()
+{
+    return false;
+}
 
 //=================================================================================
 int main(int argc, char **argv)
 {
-    // verify parameters
-    std::cout << "--Multiplier--\nUses an input key file to multiply bits superpositionally and show results.\n\n";
-    if (argc < 2)
+    // Figure out the smallest key we'll need for this operation
+    TINT minKey = 0;
     {
-        std::cout << "Usage: <inputFile>\n";;
-        ExitCode_(1);
+        std::shared_ptr<CKeySet> exploreKeys = std::make_shared<CKeySet>();
+        TSuperInt exploreA(-1, exploreKeys);
+        TSuperInt exploreB(-1, exploreKeys);
+        TSuperInt exploreResult = DoFunction(exploreA, exploreB);
+
+        minKey = (*std::max_element(exploreResult.GetBits().begin(), exploreResult.GetBits().end()));
     }
 
-    // read in the bits and keys if we can
+    // make the key set that we need, reporting progress
+    printf("Making Keys [                    ]");
+    for (int i = 0; i < 21; ++i)
+        printf("%c", 8);
     std::shared_ptr<CKeySet> keySet = std::make_shared<CKeySet>();
-    std::cout << "Loading " << argv[1] << "\n";
-    if (!keySet->Read(argv[1]))
-    {
-        std::cout << "could not load!\n";
-        ExitCode_(1);
-    }
-    std::cout << "file loaded!\n\n";
-
-    // TODO: make this code be activated with some command line param.
-    // TODO: TEMP - find out the key size we need for a 4 bit vs 4 bit multiply
-    // TODO: generalize this so other demos can use it too. command line or something?
-    /*
-    std::shared_ptr<CKeySet> exploreKeys = std::make_shared<CKeySet>();
-    CSuperInt exploreA(15, exploreKeys);
-    CSuperInt exploreB(15, exploreKeys);
-    CSuperInt exploreConstant(1, exploreKeys);
-    CSuperInt exploreResult = exploreA * exploreB;
-    TINT maxValue = 0;
-    for (const TINT &v : exploreResult.GetBits())
-    {
-        if (v > maxValue)
-            maxValue = v;
-        std::cout << v << "\n";
-    }
-    std::cout << "\n" << maxValue;
-    */
+    keySet->CalculateCached(TSuperInt::c_numBits * 2, minKey,
+        [] (uint8_t percent)
+        {
+            static uint8_t lastPercent = 0;
+            percent = percent * 20 / 100;
+            while (lastPercent < percent)
+            {
+                ++lastPercent;
+                printf("*");
+            }
+        }
+    );
+    printf("\n");
 
     // Do our superpositional math
-    CSuperInt A(keySet->GetSuperPositionedBits().begin(), keySet->GetSuperPositionedBits().begin() + keySet->GetSuperPositionedBits().size() / 2, keySet);
-    CSuperInt B(keySet->GetSuperPositionedBits().begin() + keySet->GetSuperPositionedBits().size() / 2, keySet->GetSuperPositionedBits().end(), keySet);
-    CSuperInt resultsAB(keySet);
-    CSuperInt constant(8, keySet);
-    resultsAB = A * B * constant;
-    std::cout << "Multiplied " << A.NumBits() << " bits and " << B.NumBits() << " bits and 8, to get a " << resultsAB.NumBits() << " bit result\n\n";
+    std::cout << "a" << FunctionOperator() << "b in " << TSuperInt::c_numBits << " bits\n\n";
+    TSuperInt A(keySet->GetSuperPositionedBits().begin(), keySet);
+    TSuperInt B(keySet->GetSuperPositionedBits().begin() + keySet->GetSuperPositionedBits().size() / 2, keySet);
+    TSuperInt resultsAB(keySet);
+    resultsAB = DoFunction(A,B);
 
     // show superpositional result and error (max and % of each key)
-    ReportBitsAndError(resultsAB);
+    //ReportBitsAndError(resultsAB);
 
-    #if VERIFY_RESULT()
-        // Permute and verify results
-        printf("Result Verification:\n");
-        bool success = PermuteResults2Inputs(A, B, resultsAB, A.GetKeySet().GetKeys(),
-            [&resultsAB, &keySet] (size_t a, size_t b, size_t keyIndex, const TINT &key, size_t result)
-            {
-                // Show and verify the result
-                std::cout << "  [" << keyIndex << "] (" << key << ")  " << a << " * " << b << " * 8 = " << result << "\n";
-                if (result != a * b * 8)
-                {
-                    std::cout << "ERROR! Incorrect value detected!";
-                    return false;
-                }
-
-                // ensure that the key was large enough, despite us getting the right answer
-                // TODO: why does this happen?
-                {
-                    std::shared_ptr<CKeySet> exploreKeys = std::make_shared<CKeySet>();
-                    CSuperInt exploreA(a, exploreKeys);
-                    CSuperInt exploreB(b, exploreKeys);
-                    CSuperInt exploreResult = exploreA * exploreB;
-
-                    TINT maxValue = 0;
-                    for (const TINT &v : exploreResult.GetBits())
-                    {
-                        if (v > maxValue)
-                            maxValue = v;
-                    }
-
-                    if (maxValue >= key)
-                    {
-                        std::cout << "  ERROR! value greater than key (" << maxValue << ")\n";
-
-                        for (const TINT &v : exploreResult.GetBits())
-                        {
-                            TINT div = v / key;
-                            std::cout << "    +" << div << "\n";
-                        }
-                        for (const TINT &v : keySet->GetSuperPositionedBits())
-                        {
-                            TINT div = v / key;
-                            std::cout << "    value(" << v << ")\n";
-                            std::cout << "    key(" << key << ")\n";
-                            std::cout << "    div(" << div << ")\n";
-                        }
-
-                        // TODO: div difference needs to be even? show div difference?
-
-                        int ijkl = 0;
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-        );
-
-        if (!success)
+    // Permute through results, make sure truth tables add up
+    printf("Result Verification...\n");
+    bool success = PermuteResults2Inputs(A, B, resultsAB, A.GetKeySet()->GetKeys(),
+        [](size_t a, size_t b, size_t keyIndex, const TINT &key, size_t result)
         {
-            Assert_(success);
-            ExitCode_(1);
-        }
+            // don't test dividing by zero!
+            if (b == 0 && !RightSideCanBeZero())
+                return true;
 
-    #endif
+            int intA = TSuperInt::IntFromBinary(a);
+            int intB = TSuperInt::IntFromBinary(b);
+
+            // show and verify the result
+            int actualResult = TSuperInt::IntFromBinary(DoFunction(intA, intB));
+            int computedResult = TSuperInt::IntFromBinary(result);
+            std::cout << "  [" << keyIndex << "]  " << TSuperInt::IntFromBinary(a) << FunctionOperator() << TSuperInt::IntFromBinary(b) << " = " << computedResult << "\n";
+            if (computedResult != actualResult)
+            {
+                std::cout << "  [" << keyIndex << "] (" << key << ")  " << TSuperInt::IntFromBinary(a) << FunctionOperator() << TSuperInt::IntFromBinary(b) << " = " << computedResult << " (actually " << actualResult << ")\n";
+                std::cout << "ERROR! incorrect value detected!\n";
+                return false;
+            }
+            return true;
+        }
+    );
+
+    if (!success)
+    {
+        Assert_(success);
+        ExitCode_(1);
+    }
 
     ExitCode_(0);
 }
 
+
 /*
+
 TODO:
-* is there a way to calculate the key value you'd need to pass through a given circuit? yes! below
-* send all 1s through circuit to find the maximum required key.  Can then make that+1 the smallest key for the circuit.
- * paper notes: this works because every logical operation grows the value (yes, even not!), so sending 1s will expose the largest error.
- * paper notes: this isn't garaunteed to be the smallest set of keys that could pass through the circuit though.
-  * both unused circuit paths (an overflow being ANDED by zero)
-  * as well as the fact that the largest key required doesn't line up with the key 0. diff keys may require diff sizes.
-  ? also perhaps, if something overflows always an even number of times, that'd be ok. (how to quantify?)
-  ? maybe the thing about output GCD?
- ! this seems like it might not be right.  for 4 bits and 4 bits it's telling me 127733759, but the key 10000001 for 8 bits works just fine.
- ? if it isn't right, why does the smaller key work? maybe there's something more to that... like it overflows an even number of times so we are ok??
-  * maybe look w/ debugging again and see what's going on with the max key.
-  * i think this has something to do with modulus against LCM not happening, so this isn't the real number, the modulus of some other number is the real number.
-  * not real sure how to calculate the right key then...
+11/26/15
+* clean up code to get ready for checking in
+* do a polynomial demo of some kind. bezier curve? storageless shuffler? calculate sine for an 8 bit number? all three?
 
-* move ExtendedEuclidianAlgorithm into a utils file if going to be keeping it global.
- * or, make the code you are writing be part of the key set internal functionality! this is probably the better thing to do since it calculates requirements for the keyset.
+* make a fixed point abstraction class.
+* make it easier to switch to int64_t somehow (conversion functions are the stumbling blocks)
+ * or, can we at least visualize the big ints in watch window somehow?
+* organize code a bit better.  Like put the HE stuff in it's own header - include basic HE math routines?
 
-* unsigned numbers might be good enough. unless there was a reason signed was better? subtraction maybe?
+* very large keys have problems having a file written out for them.
+* might need to make a better caching system?
+* like.. an index file.
 
-? why does multiplying by a constant add a 0 on the high side? need to fix that, it'll mess with signed numbers
- * multiply 3 by 1 and see the results are 011. multiplication order matters
-* signed math (multiplication / addition) with twos complement
- * iterate through the superpositions with negative values as well
-* make a subtractor project?
-* assert in CSuperInt that the key set pointer is the same value when doing math against multiple CSuperInts?
- * could also make it a static of CSuperInt perhaps, but that isn't so great.
-* the logging assumes the debug key is a regular int, need to treat it as a TINT.
-* with keys that large, need to make sure we treat all residues as TINTs
-* assert that the key set is the same address when multiplying or adding?
+* can we somehow make this boilerplate code go away, for generating keys and verification and such?
+* going to use it for more complex functions as well, besides adder and multiplier
+* make we can make a class with an pure virtual interface to describe these tests?
 
-* paper notes:
- * you can use non superpositional int values.  they mod any key will be the same value!
- * you can multiply any superpositional int by a power of 2 without it creating more error due to this.
+* can keyset use array? i think so
+* might want -= and += operators? maybe ++ and -- too?
+* can we make if statements easier? maybe we could have something that takes a lambda for when it's true or something?
+* profile code eventually and figure out where the time is going, and try to optimize
+* make a fixed point class!
 
-! NEXT:
- * divide / modulus: http://courses.cs.vt.edu/~cs1104/BuildingBlocks/divide.030.html
- * figure out signed add and then make an adder subtractor
-  * does CSuperInt need a CSuperUINT version? or just always do signed? probably always signed.
-  * uint add is cheaper but multiply is moreso, so not the bottleneck
-  * altgough multiply probably wants unsigned add, and then we use XOR of input sign bits to get proper sign bit of result.
- * evaluate a polynomial, like 3x^2+5x+3? (this would have both add and multiply by a constant)
-  * is there any way to easily find what key would make the result be zero? like binary search key space or something? probably not, but could be interesting if so, for solving equations.
-  * maybe have the thing evaluate circuit first to figure out the key size
- * a little nuts, but you could do dual numbers homomorphically too for automatic differentiation...
- * something more time consuming or impressive.  Like shor's algorithm or who knows what else.  CORDIC math perhaps to calculate sine since it's branchless?
- * RECRYPT: how to do this?
-  * could decrypt all permutations then maybe re-calculate numbers that fit those bounds and continue
-  * problem: could be lots of permutations and take a while. what would the benefit be?
 
-! note, could just put "first key" in key file, and then have the user generate the next # coprime values for the rest of the keys
-? should we put the paper on arxiv before submitting?
+* make unit tests to test all operations.
+// TODO: refer to TINT as SuperBit? or typedef it as the same so you can use whichever is more appropriate situationally>?
+// TODO: does it make sense to return a superbit without a keyset? maybe we need a new class CSuperBit which can hold a single bit?
+// TODO: verify that the key sets are the same between two ints, not just size. (assert that pointer is the same perhaps? doesn't catch the case of when values are same but pointer is different though)
+// TODO: review if we are always using size_t and unsigned int appropriately. maybe stick to one?
+
 */

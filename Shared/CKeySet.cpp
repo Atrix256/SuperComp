@@ -8,6 +8,7 @@
 
 #include "CKeySet.h"
 #include <fstream>
+#include <sstream>
 
 //=================================================================================
 static TINT ExtendedEuclidianAlgorithm (TINT smaller, TINT larger, TINT &s, TINT &t)
@@ -134,7 +135,26 @@ bool CKeySet::Write (const char *fileName) const
 }
 
 //=================================================================================
-void CKeySet::Calculate (int numBits, size_t minKey)
+void CKeySet::CalculateCached (int numBits, const TINT& minKey, const std::function<void (uint8_t percent)>& progressCallback)
+{
+    // if we can read the keys from the cache do that and return
+    std::stringstream fileName;
+    fileName << "keys_" << numBits << "_" << minKey << ".txt";
+    if (Read(fileName.str().c_str()))
+    {
+        progressCallback(100);
+        return;
+    }
+
+    // Do the calculation
+    Calculate(numBits, minKey, progressCallback);
+
+    // write these keys to the cache
+    Write(fileName.str().c_str());
+}
+
+//=================================================================================
+void CKeySet::Calculate (int numBits, const TINT& minKey, const std::function<void (uint8_t percent)>& progressCallback)
 {
     // size our arrays
     m_superPositionedBits.resize(size_t(numBits));
@@ -142,11 +162,22 @@ void CKeySet::Calculate (int numBits, size_t minKey)
 
     // set our keys to co prime numbers that aren't super tiny.  The smallest key
     // determines how much error we can tolerate building up, just like FHE over integers.
-    m_keysLCM = 1;
-    for (size_t i = 0, c = m_keys.size(); i < c; ++i)
+    uint8_t lastPercent = 255;
+    m_keys[0] = minKey;
+    TINT isOdd = m_keys[0] % 2;
+    if (isOdd == 0)
+        m_keys[0]++;
+    m_keysLCM = m_keys[0];
+    for (size_t i = 1, c = m_keys.size(); i < c; ++i)
     {
-        MakeKey(i, minKey);
+        MakeKey(i);
         m_keysLCM *= m_keys[i];
+        uint8_t percent = i * 33 / c;
+        if (lastPercent != percent)
+        {
+            progressCallback(percent);
+            lastPercent = percent;
+        }
     }
 
     // calculate our co-efficients for each term, for the chinese remainder theorem.
@@ -163,21 +194,37 @@ void CKeySet::Calculate (int numBits, size_t minKey)
             if (i != j)
                 coefficients[i] *= m_keys[j];
         }
+        uint8_t percent = i * 33 / c_numKeys + 33;
+        if (lastPercent != percent)
+        {
+            progressCallback(percent);
+            lastPercent = percent;
+        }
     }
 
     // calculate each x value
     for (size_t i = 0, c = m_superPositionedBits.size(); i < c; ++i)
+    {
         m_superPositionedBits[i] = CalculateBit(i, coefficients);
+        uint8_t percent = i * 33 / c + 66;
+        if (lastPercent != percent)
+        {
+            progressCallback(percent);
+            lastPercent = percent;
+        }
+    }
+
+    progressCallback(100);
 
     // we will reduce numbers since we have an LCM
     m_reduce = true;
 }
 
 //=================================================================================
-void CKeySet::MakeKey (size_t keyIndex, size_t minKey)
+void CKeySet::MakeKey (size_t keyIndex)
 {
     // make sure our keys are odd
-    TINT nextNumber = keyIndex > 0 ? (m_keys[keyIndex - 1] + 2) : TINT(minKey | 1);
+    TINT nextNumber = m_keys[keyIndex - 1] + 2;
     while (1)
     {
         if (KeyIsCoprime(keyIndex, nextNumber))

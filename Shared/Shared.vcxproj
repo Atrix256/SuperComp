@@ -13,8 +13,10 @@
   <ItemGroup>
     <ClInclude Include="CKeySet.h" />
     <ClInclude Include="CSuperInt.h" />
+    <ClInclude Include="Macros.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="Shared.h" />
+    <ClInclude Include="TINT.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CKeySet.cpp" />

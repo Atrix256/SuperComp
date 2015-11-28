@@ -3,33 +3,47 @@
 #include <iostream>
 #include <algorithm>
 #include "CSuperInt.h"
-
-#define NOMINMAX
-#include <Windows.h> // for IsDebuggerPresent() and DebugBreak()
-
-#define ExitCode_(x) {if (IsDebuggerPresent()) {WaitForEnter();} return x;}
-
-#define Assert_(x) if (!(x)) { printf("Assert Failed : " #x); DebugBreak(); }
+#include "Macros.h"
 
 void WaitForEnter ();
 
-void ReportBitsAndError(const CSuperInt &superInt);
+//=================================================================================
+template <size_t NUMBITS>
+void ReportBitsAndError(const CSuperInt<NUMBITS> &superInt)
+{
+    const std::array<TINT, NUMBITS> &bits = superInt.GetBits();
+    const std::vector<TINT> &keys = superInt.GetKeySet()->GetKeys();
+
+    for (size_t i = 0; i < NUMBITS; ++i)
+    {
+        std::cout << "--Bit " << i << "--\n" << bits[i] << "\n";
+
+        float maxError = 0.0f;
+        for (int keyIndex = 0, keyCount = keys.size(); keyIndex < keyCount; ++keyIndex)
+        {
+            TINT residue = bits[i] % keys[keyIndex];
+            float error = 100.0f * residue.convert_to<float>() / keys[keyIndex].convert_to<float>();
+            if (error > maxError)
+                maxError = error;
+        }
+        std::cout << "Highest Error = " << std::setprecision(2) << maxError << "%\n\n";
+    }
+}
 
 //=================================================================================
-template <typename L>
-bool PermuteResults2Inputs (const CSuperInt &A, const CSuperInt &B, const CSuperInt &superResult, const std::vector<TINT> &keys, const L& lambda)
+template <typename L, size_t NUMBITS>
+bool PermuteResults2Inputs(const CSuperInt<NUMBITS> &A, const CSuperInt<NUMBITS> &B, const CSuperInt<NUMBITS> &superResult, const std::vector<TINT> &keys, const L& lambda)
 {
     bool ret = true;
-    size_t numABits = A.NumBits();
-    for (size_t b = 0, bc = (1 << B.NumBits()) - 1; b <= bc; ++b)
+    for (size_t b = 0, bc = (1 << NUMBITS) - 1; b <= bc; ++b)
     {
-        for (size_t a = 0, ac = (1 << A.NumBits()) - 1; a <= ac; ++a)
+        for (size_t a = 0, ac = (1 << NUMBITS) - 1; a <= ac; ++a)
         {
             // get the index of our key for this specific set of inputs
-            size_t keyIndex = (b << numABits) | a;
+            size_t keyIndex = (b << NUMBITS) | a;
 
             // decode result for this specific key
-            size_t result = superResult.Decode(keys[keyIndex]);
+            size_t result = superResult.DecodeBinary(keys[keyIndex]);
 
             // call the lambda!
             ret = ret && lambda(a, b, keyIndex, keys[keyIndex], result);
