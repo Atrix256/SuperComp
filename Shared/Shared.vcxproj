@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CKeySet.h" />
+    <ClInclude Include="CSuperFixed.h" />
     <ClInclude Include="CSuperInt.h" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="Settings.h" />
@@ -20,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CKeySet.cpp" />
+    <ClCompile Include="CSuperFixed.cpp" />
     <ClCompile Include="CSuperInt.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="Shared.cpp" />

@@ -1,7 +1,9 @@
 #include "Shared/Shared.h"
 #include "Shared/CKeySet.h"
+#include "Shared/CSuperFixed.h" // TODO: temp
 
 typedef CSuperInt<3> TSuperInt;
+typedef CSuperFixed<3, 2> TSuperFixed;
 
 //=================================================================================
 template <typename T>
@@ -25,6 +27,33 @@ bool RightSideCanBeZero ()
 //=================================================================================
 int main(int argc, char **argv)
 {
+    // TODO: temp fixed point tests
+    {
+        std::shared_ptr<CKeySet> keys = std::make_shared<CKeySet>();
+        TSuperFixed a(1.5f, keys);
+        TSuperFixed b(-0.5f, keys);
+
+        TSuperFixed aplusb = a + b;
+        TSuperFixed aminusb = a - b;
+        TSuperFixed atimesb = a * b;
+        TSuperFixed adivb = a / b;
+
+        float fa = a.DecodeFloat(2);
+        float fb = b.DecodeFloat(2);
+
+        float faplusb = aplusb.DecodeFloat(2);
+        float faminusb = aminusb.DecodeFloat(2);
+        float fatimesb = atimesb.DecodeFloat(2);
+        float fadivb = adivb.DecodeFloat(2);
+
+        float actualatimesb = fa*fb;
+        float actualadivb = fa/fb;
+
+        // TODO: make sure division works. may not want to extend precision though since it takes so long. maybe have a # define for extending precision in both division and multiplication?
+
+        int ijkl = 0;
+    }
+
     // Figure out the smallest key we'll need for this operation
     TINT minKey = 0;
     {
@@ -104,11 +133,23 @@ int main(int argc, char **argv)
 /*
 
 TODO:
-11/26/15
-* clean up code to get ready for checking in
+
+* maybe a define for increased precision? or a different function call or soemthing? compare contrast in paper perhaps. for CSuperFixed
+
+* should we also do (or offer) TINT in increased precision for * and /?
+ * maybe not, but could note it as a possibility in the paper?
+
+* it's easy to bust the size of fixed point by accident. how should we deal with that? like a <2,2> when you add 1.5 and 0.5 you got -2.0, which is wrong.
+
+* when you start doing fixed point multiply and divide it gets even worse. should we use higher precision temporarily when doing fixed point multiplication and division?
+ * yeah, i think we should.  in CSuperFixed * and /, do the math in a larger number of bits (i think maybe it should be BITS_INTEGER+BITS_FRACTION+BITS_FRACTION) then copy the bits back in.
+ * or, re-look up how many bits the result of an N bit * N bit number should be.  similar for division?
+
 * do a polynomial demo of some kind. bezier curve? storageless shuffler? calculate sine for an 8 bit number? all three?
 
-* make a fixed point abstraction class.
+* unit tests for fixed point operations too
+
+
 * make it easier to switch to int64_t somehow (conversion functions are the stumbling blocks)
  * or, can we at least visualize the big ints in watch window somehow?
 * organize code a bit better.  Like put the HE stuff in it's own header - include basic HE math routines?

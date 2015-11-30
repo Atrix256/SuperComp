@@ -75,7 +75,8 @@ public:
 
     // shifting is computationally inexpensive
     // TODO: make shifting use swap with the values that are going to be zeroed out, to allow move semantics?
-    void ShiftLeft(size_t amount)
+    // TODO: how does shifting work with signed numbers?
+    void ShiftLeft (size_t amount)
     {
         if (amount == 0)
             return;
@@ -85,6 +86,20 @@ public:
 
         for (size_t index = 0; index < amount; ++index)
             m_bits[index] = 0;
+    }
+
+    void SignedShiftRight (size_t amount)
+    {
+        if (amount == 0)
+            return;
+
+        const TINT& signBit = IsNegative();
+
+        for (size_t index = 0; index < NUMBITS - amount; ++index)
+            m_bits[index] = m_bits[index + amount];
+
+        for (size_t index = NUMBITS - amount; index < NUMBITS; ++index)
+            m_bits[index] = signBit;
     }
 
     // multiply by -1. Negates the bits, then add 1
