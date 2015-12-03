@@ -33,6 +33,7 @@ public:
     CSuperInt (int value, const std::shared_ptr<CKeySet> &keySet)
         : m_keySet(keySet)
     {
+        static_assert(NUMBITS > 0, "NUMBITS must be greater than 0");
         SetInt(value);
     }
 
@@ -42,6 +43,7 @@ public:
         const std::shared_ptr<CKeySet> &keySet)
         : m_keySet(keySet)
     {
+        static_assert(NUMBITS > 0, "NUMBITS must be greater than 0");
         for (size_t i = 0; i < NUMBITS; ++i)
             m_bits[i] = bitsBegin[i];
     }
