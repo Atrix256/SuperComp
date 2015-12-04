@@ -150,6 +150,31 @@ public:
         #endif
     }
 
+    // Flip sign
+    void Negate ()
+    {
+        m_int.Negate();
+    }
+
+    void NegateConditional (const TINT& condition)
+    {
+        m_int.NegateConditional(condition);
+    }
+
+    // absolute value.
+    void Abs ()
+    {
+        m_int.Abs();
+    }
+
+    // returns a superpositional value for whether or not this number is negative
+    const TINT& IsNegative() const { return m_int.IsNegative() }
+
+public:
+    static const size_t c_numBits = BITS_INTEGER + BITS_FRACTION;
+    static const size_t c_numIntegerBits = BITS_INTEGER;
+    static const size_t c_numFractionBits = BITS_FRACTION;
+
 private:
     CSuperInt<BITS_INTEGER + BITS_FRACTION> m_int;
 

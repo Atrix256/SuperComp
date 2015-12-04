@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CFixed.h" />
     <ClInclude Include="CKeySet.h" />
     <ClInclude Include="CSuperFixed.h" />
     <ClInclude Include="CSuperInt.h" />
@@ -20,6 +21,7 @@
     <ClInclude Include="TINT.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CFixed.cpp" />
     <ClCompile Include="CKeySet.cpp" />
     <ClCompile Include="CSuperFixed.cpp" />
     <ClCompile Include="CSuperInt.cpp" />
