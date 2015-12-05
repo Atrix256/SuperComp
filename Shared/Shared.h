@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include "CSuperInt.h"
+#include "CSuperFixed.h"
 #include "Macros.h"
 
 void WaitForEnter ();
@@ -31,6 +32,13 @@ void ReportBitsAndError(const CSuperInt<NUMBITS> &superInt)
 }
 
 //=================================================================================
+template <size_t BITS_INTEGER, size_t BITS_FRACTION>
+void ReportBitsAndError(const CSuperFixed<BITS_INTEGER, BITS_FRACTION> &superFixed)
+{
+    ReportBitsAndError(superFixed.GetInternalInt());
+}
+
+//=================================================================================
 template <typename L, size_t NUMBITS>
 bool PermuteResults2Inputs(const CSuperInt<NUMBITS> &A, const CSuperInt<NUMBITS> &B, const CSuperInt<NUMBITS> &superResult, const std::vector<TINT> &keys, const L& lambda)
 {
@@ -50,4 +58,11 @@ bool PermuteResults2Inputs(const CSuperInt<NUMBITS> &A, const CSuperInt<NUMBITS>
         }
     }
     return ret;
+}
+
+//=================================================================================
+template <typename L, size_t BITS_INTEGER, size_t BITS_FRACTION>
+bool PermuteResults2Inputs(const CSuperFixed<BITS_INTEGER, BITS_FRACTION> &A, const CSuperFixed<BITS_INTEGER, BITS_FRACTION> &B, const CSuperFixed<BITS_INTEGER, BITS_FRACTION> &superResult, const std::vector<TINT> &keys, const L& lambda)
+{
+    return PermuteResults2Inputs(A.GetInternalInt(), B.GetInternalInt(), superResult.GetInternalInt(), keys, lambda);
 }

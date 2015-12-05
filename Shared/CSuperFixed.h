@@ -11,7 +11,7 @@
 #include "CSuperInt.h"
 
 // defines to extend precision of intermediate values when performing operations
-#define CSUPERFIXED_EXTENDPRECISION_MULTIPLY()  1
+#define CSUPERFIXED_EXTENDPRECISION_MULTIPLY()  0
 #define CSUPERFIXED_EXTENDPRECISION_DIVIDE()    0
 
 template <size_t BITS_INTEGER, size_t BITS_FRACTION>
@@ -50,6 +50,39 @@ public:
     float DecodeFloat (const TINT& key) const
     {
         return ((float)m_int.DecodeInt(key)) * c_intToFloat;
+    }
+
+    // access to internal int
+    int DecodeInternalInt(const TINT& key) const
+    {
+        return m_int.DecodeInt(key);
+    }
+
+    size_t DecodeInternalBinary (const TINT& key) const
+    {
+        return m_int.DecodeBinary(key);
+    }
+
+    const CSuperInt<BITS_INTEGER + BITS_FRACTION>& GetInternalInt () const
+    {
+        return m_int;
+    }
+
+    const std::shared_ptr<CKeySet> &GetKeySet() const {
+        return m_int.GetKeySet();
+    }
+
+    void SetToBinaryMax()
+    {
+        m_int.SetToBinaryMax();
+    }
+
+    const std::array<TINT, BITS_INTEGER + BITS_FRACTION>& GetBits() const {
+        return m_int.GetBits();
+    }
+
+    std::array<TINT, BITS_INTEGER + BITS_FRACTION>& GetBits() {
+        return m_int.GetBits();
     }
 
     //=================================================================================

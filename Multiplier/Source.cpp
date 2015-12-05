@@ -25,15 +25,21 @@ int main(int argc, char **argv)
         float faminusb = aminusb.DecodeFloat(2);
         float fatimesb = atimesb.DecodeFloat(2);
         float fadivb = adivb.DecodeFloat(2);
+        int ifadivb = adivb.DecodeInternalInt(2);
+        size_t sfadivb = adivb.DecodeInternalBinary(2);
 
         TFixed fixeda(c_valueA);
         TFixed fixedb(c_valueB);
 
         TFixed fixedaplusb = fixeda + fixedb;
         TFixed fixedaminusb = fixeda - fixedb;
+        TFixed fixedatimesb = fixeda * fixedb;
+        TFixed fixedadivb = fixeda / fixedb;
 
         float ffixedaplusb = fixedaplusb.GetFloat();
         float ffixedaminusb = fixedaminusb.GetFloat();
+        float ffixedatimesb = fixedatimesb.GetFloat();
+        float ffixedadivb = fixedadivb.GetFloat();
 
         // TODO: fix CFixed storing and recalling negative values
 

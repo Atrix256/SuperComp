@@ -22,16 +22,17 @@ UNITTEST(Int_Multiply, int, TSuperInt, *, true)
 UNITTEST(Int_Divide, int, TSuperInt, /, false)
 UNITTEST(Int_Modulus, int, TSuperInt, %, false)
 
-// TODO: Negate() and Abs() for int.
-// TODO: Negate() and Abs() for fixed point.
+UNITTEST(Fixed_Add, TFixed, TSuperFixed, +, true)
+// TODO: uncomment and get working
+//UNITTEST(Fixed_Subtract, TFixed, TSuperFixed, -, true)
+//UNITTEST(Fixed_Multiply, TFixed, TSuperFixed, *, true)
+//UNITTEST(Fixed_Divide, TFixed, TSuperFixed, /, false)
 
-// TODO: need a fixed point class to be able to compare results with "reality"
-//UNITTEST(Fixed_Add, int, TSuperFixed, +, true)
-//UNITTEST(Fixed_Subtract, int, TSuperFixed, -, true)
+// TODO: Negate() and Abs() for int and fixed point
 
 #undef UNITTEST
 
-// TODO: need a way to make the unit tests verbose, to show truth table and errors etc. Also key sizes?
 // TODO: report timing of unit tests
 // TODO: more progress bar reporting? maybe show it on the line below the current operation, then erasing it to print the next operation? or show on same line.  Then erase and replace with timing in seconds for how long it took?
-// TODO: how does that work out when writing to a file though?
+// TODO: how does that work out when writing to a file though? seems ok.  it has some weird blocks for backspace but whatever
+// TODO: maybe a define for showing progress bars or not?

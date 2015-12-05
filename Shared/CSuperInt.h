@@ -75,9 +75,14 @@ public:
             m_bits[i] = (binary & 1) ? 1 : 0;
     }
 
-    // shifting is computationally inexpensive
-    // TODO: make shifting use swap with the values that are going to be zeroed out, to allow move semantics?
-    // TODO: how does shifting work with signed numbers?
+    void SetToBinaryMax()
+    {
+        for (size_t i = 0; i < NUMBITS; ++i)
+            m_bits[i] = 1;
+    }
+
+    // shifting is way less expensive than other operations since it doesn't use logic circuits
+    // it just moves around the internal representation of the bits
     void ShiftLeft (size_t amount)
     {
         if (amount == 0)

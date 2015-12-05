@@ -11,6 +11,25 @@
 #include "Shared\CSuperFixed.h"
 #include "Shared\CFixed.h"
 
+// TODO: convert unit test code to use SuperType and BasicType all the way.
+// TODO: make it show fixed point as float output
+// TODO: instead of saying "in 4 bits" for fixed, could have it say eg 2.2
+
+#define SHOW_VERIFICATION() 1
+#define SHOW_BITSANDERROR() 0
+
+#if SHOW_VERIFICATION()
+    #define VERIFICATION(x) x
+#else
+    #define VERIFICATION(x)
+#endif
+
+#if SHOW_BITSANDERROR()
+    #define BITSANDERROR(x) x
+#else
+    #define BITSANDERROR(x)
+#endif
+
 // make the templated operation to support each unit test
 #define UNITTEST(Name, BasicType, SuperType, Operation, AllowRightSideZero) \
     template <typename T> \
@@ -29,9 +48,11 @@
         TINT minKey = 0; \
         { \
             std::shared_ptr<CKeySet> exploreKeys = std::make_shared<CKeySet>(); \
-            TSuperInt exploreA(-1, exploreKeys); \
-            TSuperInt exploreB(-1, exploreKeys); \
-            TSuperInt exploreResult = UnitTestFunction_##Name(exploreA, exploreB); \
+            SuperType exploreA(exploreKeys); \
+            SuperType exploreB(exploreKeys); \
+            exploreA.SetToBinaryMax(); \
+            exploreB.SetToBinaryMax(); \
+            SuperType exploreResult = UnitTestFunction_##Name(exploreA, exploreB); \
             minKey = (*std::max_element(exploreResult.GetBits().begin(), exploreResult.GetBits().end())); \
         } \
         \
@@ -56,12 +77,12 @@
         \
         /* Do our superpositional math */ \
         std::cout << "a" << " " #Operation " " << "b in " << SuperType::c_numBits << " bits\n"; \
-        TSuperInt A(keySet->GetSuperPositionedBits().begin(), keySet); \
-        TSuperInt B(keySet->GetSuperPositionedBits().begin() + keySet->GetSuperPositionedBits().size() / 2, keySet); \
-        TSuperInt resultsAB(keySet); \
+        SuperType A(keySet->GetSuperPositionedBits().begin(), keySet); \
+        SuperType B(keySet->GetSuperPositionedBits().begin() + keySet->GetSuperPositionedBits().size() / 2, keySet); \
+        SuperType resultsAB(keySet); \
         resultsAB = UnitTestFunction_##Name(A,B); \
         /* show superpositional result and error (max and % of each key) */ \
-        /* ReportBitsAndError(resultsAB); */ \
+        BITSANDERROR(ReportBitsAndError(resultsAB)); \
         \
         /* Verify result permutations */ \
         printf("Result Verification...\n"); \
@@ -78,7 +99,7 @@
                 /* show and verify the result */ \
                 int actualResult = TSuperInt::IntFromBinary(UnitTestFunction_##Name(intA, intB)); \
                 int computedResult = TSuperInt::IntFromBinary(result); \
-                /* std::cout << "  [" << keyIndex << "]  " << TSuperInt::IntFromBinary(a) << FunctionOperator() << TSuperInt::IntFromBinary(b) << " = " << computedResult << "\n"; */ \
+                VERIFICATION(std::cout << "  [" << keyIndex << "]  " << TSuperInt::IntFromBinary(a) << " " #Operation " " << TSuperInt::IntFromBinary(b) << " = " << computedResult << "\n"); \
                 if (computedResult != actualResult) \
                 { \
                     std::cout << "  [" << keyIndex << "] (" << key << ")  " << TSuperInt::IntFromBinary(a) << " " #Operation " " << TSuperInt::IntFromBinary(b) << " = " << computedResult << " (actually " << actualResult << ")\n"; \
