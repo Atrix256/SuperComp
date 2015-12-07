@@ -64,10 +64,12 @@ int main(int argc, char **argv)
 
 TODO:
 
+* the unit tests are good in that they do what they should, but they are hard to read
+ * make another demo or two that show things working simply (creating key files etc)
+ * do a polynomial demo of some kind. bezier curve? storageless shuffler? calculate sine for an 8 bit number? all three?
+
+
 * rename multiplier project to unittests?
-* get rid of adder?
-* do we still need the key generator project?
-* do we still need the shared project? maybe not...
 
 * see what else needs to be removed from code (like macros.h might have stuff?)
 
@@ -80,31 +82,23 @@ TODO:
 
 * it's easy to bust the size of fixed point by accident. how should we deal with that? like a <2,2> when you add 1.5 and 0.5 you got -2.0, which is wrong.
 
-* do a polynomial demo of some kind. bezier curve? storageless shuffler? calculate sine for an 8 bit number? all three?
-
 * unit tests for fixed point operations and integer operations
 
 * unit tests for non superpositional values? or maybe having one with constants is enough?
 
-* make it easier to switch to int64_t somehow (conversion functions are the stumbling blocks)
- * or, can we at least visualize the big ints in watch window somehow?
 * organize code a bit better.  Like put the HE stuff in it's own header - include basic HE math routines?
 
 * very large keys have problems having a file written out for them.
 * might need to make a better caching system?
 * like.. an index file that describes key files and points at them.
 
-* can we somehow make this boilerplate code go away, for generating keys and verification and such?
-* going to use it for more complex functions as well, besides adder and multiplier
-* make we can make a class with an pure virtual interface to describe these tests?
-
 * can keyset use array? i think so
-* might want -= and += operators? maybe ++ and -- too?
 * can we make if statements easier? maybe we could have something that takes a lambda for when it's true or something?
+ * dunno...
 * profile code eventually and figure out where the time is going, and try to optimize
+ * might want -= and += operators? maybe ++ and -- too? less memory copying
 
 
-* make unit tests to test all operations.
 * refer to TINT as SuperBit? or typedef it as the same so you can use whichever is more appropriate situationally? phantom type it?
 * does it make sense to return a superbit without a keyset? maybe we need a new class CSuperBit which can hold a single bit, and the key set?
 * verify that the key sets are the same between two ints, not just size. (assert that pointer is the same perhaps? doesn't catch the case of when values are same but pointer is different though)

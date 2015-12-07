@@ -14,6 +14,7 @@
 // TODO: convert unit test code to use SuperType and BasicType all the way.
 // TODO: make it show fixed point as float output
 // TODO: instead of saying "in 4 bits" for fixed, could have it say eg 2.2
+// TODO: instead of int being the type for superint, maybe need to use CFixed for that with 0 fractional bits?
 
 #define SHOW_VERIFICATION() 1
 #define SHOW_BITSANDERROR() 0
@@ -57,19 +58,17 @@
         } \
         \
         /* make the key set that we need, reporting progress */ \
-        printf("Making Keys [                    ]"); \
-        for (int i = 0; i < 21; ++i) \
-            printf("%c", 8); \
+        printf("Making Keys: "); \
         std::shared_ptr<CKeySet> keySet = std::make_shared<CKeySet>(); \
         keySet->CalculateCached(SuperType::c_numBits * 2, minKey, \
             [] (uint8_t percent) \
             { \
                 static uint8_t lastPercent = 0; \
-                percent = percent * 20 / 100; \
+                percent = percent * 10 / 100; \
                 while (lastPercent < percent) \
                 { \
+                    printf("%c", '9' - lastPercent); \
                     ++lastPercent; \
-                    printf("*"); \
                 } \
             } \
         ); \
