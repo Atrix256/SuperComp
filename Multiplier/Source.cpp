@@ -64,9 +64,13 @@ int main(int argc, char **argv)
 
 TODO:
 
+* check unit tests for a+b wiht super int.  there seem to be repeats, why? look at starting values, it does pos and negs twice!
+ * actually no, that is the fixed point test just not working correctly, all is well.
+
 * the unit tests are good in that they do what they should, but they are hard to read
  * make another demo or two that show things working simply (creating key files etc)
  * do a polynomial demo of some kind. bezier curve? storageless shuffler? calculate sine for an 8 bit number? all three?
+ * maybe make unit tests more explicit.  sure, it's copy/paste but it's easy to read.
 
 
 * rename multiplier project to unittests?
