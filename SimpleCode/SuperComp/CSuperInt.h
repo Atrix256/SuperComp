@@ -23,7 +23,7 @@
 #define Assert_(x) if (!(x)) { printf("Assert Failed : " #x); DebugBreak(); }
 
 //=================================================================================
-template <size_t NUMBITS>
+template <size_t NUMBITS, bool USELOOKUPTABLES>
 class CSuperInt
 {
 public:
@@ -122,7 +122,7 @@ public:
         for (TINT& bit : m_bits)
             bit = NOT(bit, keySet);
 
-        CSuperInt<NUMBITS> one(1, m_keySet);
+        CSuperInt<NUMBITS, false> one(1, m_keySet);
         *this = *this + one;
     }
 
@@ -133,7 +133,7 @@ public:
 
         // make the adder here in case the condition is part of this int
         // as is the case of when doing abs
-        CSuperInt<NUMBITS> add(m_keySet);
+        CSuperInt<NUMBITS, false> add(m_keySet);
         add.GetBit(0) = condition;
 
         // Step 1 - negate by XORing every bit against the condition bit.
@@ -143,7 +143,7 @@ public:
 
         // Step 2 - add a number where the lowest bit is the condition bit.
         // AKA add 1 conditionally.
-        CSuperInt<NUMBITS> tempTest(m_keySet);
+        CSuperInt<NUMBITS, false> tempTest(m_keySet);
         *this = *this + add;
     }
 
@@ -211,8 +211,8 @@ private:
     static const TINT           s_zeroBit;
 };
 
-template <size_t NUMBITS>
-const TINT CSuperInt<NUMBITS>::s_zeroBit = 0;
+template <size_t NUMBITS, bool USELOOKUPTABLES>
+const TINT CSuperInt<NUMBITS, USELOOKUPTABLES>::s_zeroBit = 0;
 
 //=================================================================================
 // HE operations
@@ -239,7 +239,7 @@ inline TINT NOT(const TINT &A, const CKeySet &keySet)
 }
 
 //=================================================================================
-// Math operations
+// Math operations for non lookup table math
 //=================================================================================
 inline TINT FullAdder(const TINT &A, const TINT &B, TINT &carryBit, const CKeySet &keySet)
 {
@@ -253,7 +253,7 @@ inline TINT FullAdder(const TINT &A, const TINT &B, TINT &carryBit, const CKeySe
 
 //=================================================================================
 template <size_t NUMBITS>
-CSuperInt<NUMBITS> operator + (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
+CSuperInt<NUMBITS, false> operator + (const CSuperInt<NUMBITS, false> &a, const CSuperInt<NUMBITS, false> &b)
 {
     // we initialize the carry bit to 0, not a superpositional value
     TINT carryBit = 0;
@@ -261,7 +261,7 @@ CSuperInt<NUMBITS> operator + (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMB
     // do the adding and return the result
     const std::shared_ptr<CKeySet>& keySetPointer = a.GetKeySet();
     const CKeySet& keySet = *keySetPointer;
-    CSuperInt<NUMBITS> result(keySetPointer);
+    CSuperInt<NUMBITS, false> result(keySetPointer);
     for (size_t i = 0; i < NUMBITS; ++i)
         result.GetBit(i) = FullAdder(a.GetBit(i), b.GetBit(i), carryBit, keySet);
     return result;
@@ -269,25 +269,25 @@ CSuperInt<NUMBITS> operator + (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMB
 
 //=================================================================================
 template <size_t NUMBITS>
-CSuperInt<NUMBITS> operator - (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
+CSuperInt<NUMBITS, false> operator - (const CSuperInt<NUMBITS, false> &a, const CSuperInt<NUMBITS, false> &b)
 {
-    CSuperInt<NUMBITS> negativeB(b);
+    CSuperInt<NUMBITS, false> negativeB(b);
     negativeB.Negate();
     return a + negativeB;
 }
 
 //=================================================================================
 template <size_t NUMBITS>
-CSuperInt<NUMBITS> operator * (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
+CSuperInt<NUMBITS, false> operator * (const CSuperInt<NUMBITS, false> &a, const CSuperInt<NUMBITS, false> &b)
 {
     // do multiplication like this:
     // https://en.wikipedia.org/wiki/Binary_multiplier#Multiplication_basics
     const std::shared_ptr<CKeySet>& keySetPointer = a.GetKeySet();
     const CKeySet& keySet = *keySetPointer;
-    CSuperInt<NUMBITS> result(keySetPointer);
+    CSuperInt<NUMBITS, false> result(keySetPointer);
     for (size_t i = 0; i < NUMBITS; ++i)
     {
-        CSuperInt<NUMBITS> row = b;
+        CSuperInt<NUMBITS, false> row = b;
         for (TINT &v : row.GetBits())
             v = AND(v, a.GetBit(i), keySet);
 
@@ -299,10 +299,10 @@ CSuperInt<NUMBITS> operator * (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMB
 
 //=================================================================================
 template <size_t NUMBITS>
-CSuperInt<NUMBITS> operator / (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
+CSuperInt<NUMBITS, false> operator / (const CSuperInt<NUMBITS, false> &a, const CSuperInt<NUMBITS, false> &b)
 {
-    CSuperInt<NUMBITS> Q(a.GetKeySet());
-    CSuperInt<NUMBITS> R(a.GetKeySet());
+    CSuperInt<NUMBITS, false> Q(a.GetKeySet());
+    CSuperInt<NUMBITS, false> R(a.GetKeySet());
 
     Divide(a, b, Q, R);
     return Q;
@@ -310,10 +310,10 @@ CSuperInt<NUMBITS> operator / (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMB
 
 //=================================================================================
 template <size_t NUMBITS>
-CSuperInt<NUMBITS> operator % (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
+CSuperInt<NUMBITS, false> operator % (const CSuperInt<NUMBITS, false> &a, const CSuperInt<NUMBITS, false> &b)
 {
-    CSuperInt<NUMBITS> Q(a.GetKeySet());
-    CSuperInt<NUMBITS> R(a.GetKeySet());
+    CSuperInt<NUMBITS, false> Q(a.GetKeySet());
+    CSuperInt<NUMBITS, false> R(a.GetKeySet());
 
     Divide(a, b, Q, R);
     return R;
@@ -321,23 +321,23 @@ CSuperInt<NUMBITS> operator % (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMB
 
 //=================================================================================
 template <size_t NUMBITS>
-TINT operator < (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
+TINT operator < (const CSuperInt<NUMBITS, false> &a, const CSuperInt<NUMBITS, false> &b)
 {
-    CSuperInt<NUMBITS> result(a.GetKeySet());
+    CSuperInt<NUMBITS, false> result(a.GetKeySet());
     result = a - b;
     return result.IsNegative();
 }
 
 //=================================================================================
 template <size_t NUMBITS>
-TINT operator <= (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
+TINT operator <= (const CSuperInt<NUMBITS, false> &a, const CSuperInt<NUMBITS, false> &b)
 {
     return NOT(a > B, *a.GetKeySet());
 }
 
 //=================================================================================
 template <size_t NUMBITS>
-TINT operator > (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
+TINT operator > (const CSuperInt<NUMBITS, false> &a, const CSuperInt<NUMBITS, false> &b)
 {
     CSuperInt<NUMBITS> result(a.GetKeySet());
     result = b - a;
@@ -346,14 +346,14 @@ TINT operator > (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
 
 //=================================================================================
 template <size_t NUMBITS>
-TINT operator >= (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
+TINT operator >= (const CSuperInt<NUMBITS, false> &a, const CSuperInt<NUMBITS, false> &b)
 {
     return NOT(a < b, *a.GetKeySet());
 }
 
 //=================================================================================
 template <size_t NUMBITS>
-TINT operator == (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
+TINT operator == (const CSuperInt<NUMBITS, false> &a, const CSuperInt<NUMBITS, false> &b)
 {
     const CKeySet& keySet = *a.GetKeySet();
     TINT ANotLtB = NOT(a < b, keySet);
@@ -363,7 +363,7 @@ TINT operator == (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
 
 //=================================================================================
 template <size_t NUMBITS>
-TINT operator != (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
+TINT operator != (const CSuperInt<NUMBITS, false> &a, const CSuperInt<NUMBITS, false> &b)
 {
     const CKeySet& keySet = *a.GetKeySet();
     TINT ALtB = a < b;
@@ -373,7 +373,7 @@ TINT operator != (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
 
 //=================================================================================
 template <size_t NUMBITS>
-void Divide (const CSuperInt<NUMBITS> &Nin, const CSuperInt<NUMBITS> &Din, CSuperInt<NUMBITS> &Q, CSuperInt<NUMBITS> &R)
+void Divide (const CSuperInt<NUMBITS, false> &Nin, const CSuperInt<NUMBITS, false> &Din, CSuperInt<NUMBITS, false> &Q, CSuperInt<NUMBITS, false> &R)
 {
     // Unsigned integer division algorithm from here: 
     // https://en.wikipedia.org/wiki/Division_algorithm#Integer_division_.28unsigned.29_with_remainder
@@ -384,8 +384,8 @@ void Divide (const CSuperInt<NUMBITS> &Nin, const CSuperInt<NUMBITS> &Din, CSupe
     R.SetInt(0);
 
     // Make N and D positive, making sure to remember what their sign used to be
-    CSuperInt<NUMBITS> N(Nin);
-    CSuperInt<NUMBITS> D(Din);
+    CSuperInt<NUMBITS, false> N(Nin);
+    CSuperInt<NUMBITS, false> D(Din);
     TINT NWasNegative = N.IsNegative();
     TINT DWasNegative = D.IsNegative();
     N.Abs();
@@ -406,9 +406,9 @@ void Divide (const CSuperInt<NUMBITS> &Nin, const CSuperInt<NUMBITS> &Din, CSupe
             TINT RgteD = R >= D;
 
             // R = R - D
-            CSuperInt<NUMBITS> branchlessMultiplier(N.GetKeySet());
+            CSuperInt<NUMBITS, false> branchlessMultiplier(N.GetKeySet());
             branchlessMultiplier.GetBit(0) = RgteD;
-            CSuperInt<NUMBITS> subtractD(D);
+            CSuperInt<NUMBITS, false> subtractD(D);
             subtractD = D * branchlessMultiplier;
             R = R - subtractD;
 

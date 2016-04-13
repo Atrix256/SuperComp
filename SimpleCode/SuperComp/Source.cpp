@@ -3,7 +3,7 @@
 #include "Shared.h"
 
 // change this to change the size of the superpositional integer
-typedef CSuperInt<4> TSuperInt;
+typedef CSuperInt<4,false> TSuperInt;
 
 // turn on for more detailed info
 #define SHOW_BITS_AND_ERROR()   0
@@ -220,3 +220,13 @@ int main (int argc, char **argv)
     WaitForEnter();
     return success ? 0 : 1;
 }
+
+/*
+
+TODO:
+* make supercomp have a boolean to fall back to using ANF.
+* make variadic (template?) XOR / AND? not sure if needed.
+* run perf tests of above using ANF, put data in folder, make graphs.  compare to other add, multiply, divide.
+
+? should we also try unums?
+*/
