@@ -149,6 +149,7 @@
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ANF.h" />
     <ClInclude Include="CKeySet.h" />
     <ClInclude Include="CSuperInt.h" />
     <ClInclude Include="Shared.h" />

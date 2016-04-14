@@ -8,7 +8,7 @@ void WaitForEnter ();
 
 //=================================================================================
 template <size_t NUMBITS>
-void ReportBitsAndError(const CSuperInt<NUMBITS, false> &superInt)
+void ReportBitsAndError(const CSuperInt<NUMBITS> &superInt)
 {
     const std::array<TINT, NUMBITS> &bits = superInt.GetBits();
     const std::vector<TINT> &keys = superInt.GetKeySet()->GetKeys();
@@ -31,7 +31,7 @@ void ReportBitsAndError(const CSuperInt<NUMBITS, false> &superInt)
 
 //=================================================================================
 template <typename L, size_t NUMBITS>
-bool PermuteResults2Inputs(const CSuperInt<NUMBITS, false> &A, const CSuperInt<NUMBITS, false> &B, const CSuperInt<NUMBITS, false> &superResult, const std::vector<TINT> &keys, const L& lambda)
+bool PermuteResults2Inputs(const CSuperInt<NUMBITS> &A, const CSuperInt<NUMBITS> &B, const CSuperInt<NUMBITS> &superResult, const std::vector<TINT> &keys, const L& lambda)
 {
     bool ret = true;
     for (size_t b = 0, bc = (1 << NUMBITS) - 1; b <= bc; ++b)

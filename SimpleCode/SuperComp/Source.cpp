@@ -1,9 +1,10 @@
 #include "CKeySet.h"
 #include "CSuperInt.h"
 #include "Shared.h"
+#include "ANF.h"
 
 // change this to change the size of the superpositional integer
-typedef CSuperInt<4,false> TSuperInt;
+typedef CSuperInt<2> TSuperInt;
 
 // turn on for more detailed info
 #define SHOW_BITS_AND_ERROR()   0
@@ -51,6 +52,22 @@ template <typename T>
 T DoModulus (const T&A, const T&B)
 {
     return A / B;
+}
+
+//=================================================================================
+template <typename T, size_t NUM_INPUT_BITS, size_t NUM_OUTPUT_BITS, typename LAMBDA>
+std::function <T(const T&A, const T&B)> MakeANFTest (const LAMBDA& lambda)
+{
+    // TODO: maybe this function wraps DoTest to re-use terms lookup table? or a diff function to wrap it that takes the lambda and calls this and other things.
+
+    auto terms = MakeANFTerms<NUM_INPUT_BITS, NUM_OUTPUT_BITS>(lambda);
+
+    // todo: copy by reference if the terms stay in scope, which they SHOULD eventually
+    return [terms] (const T&A, const T&B) -> T
+    {
+        // TODO: combine A and B and use ANF terms somehow
+        return 0;
+    };
 }
 
 //=================================================================================
@@ -180,6 +197,7 @@ bool DoTest (
 //=================================================================================
 bool DoTests (int testIndex)
 {
+    /*
     if (!DoTest(true, "+", "Addition", DoAddition<TSuperInt>, DoAddition<int>, testIndex))
         return false;
 
@@ -194,6 +212,26 @@ bool DoTests (int testIndex)
 
     if (!DoTest(false, "%", "Modulus", DoModulus<TSuperInt>, DoModulus<int>, testIndex))
         return false;
+    */
+
+    // TODO: can this somehow fit in with the regular DoTest function, or can we make a separate one for anf?
+    // TODO: needs to be an array of vector!
+
+
+    auto a = MakeANFTest<int,3,2>(
+        [] (size_t inputValue, size_t numInputBits) ->size_t
+        {
+            // Count how many bits there are
+            size_t result = 0;
+            while (inputValue)
+            {
+                if (inputValue & 1)
+                    result++;
+                inputValue = inputValue >> 1;
+            }
+            return result;
+        }
+    );
 
     return true;
 }
@@ -224,6 +262,9 @@ int main (int argc, char **argv)
 /*
 
 TODO:
+* make a function to convert a function to anf (a list of terms)
+* then, make a superint function that evaluates an anf.  this way timing of creating anf isn't in the timings.
+
 * make supercomp have a boolean to fall back to using ANF.
 * make variadic (template?) XOR / AND? not sure if needed.
 * run perf tests of above using ANF, put data in folder, make graphs.  compare to other add, multiply, divide.
