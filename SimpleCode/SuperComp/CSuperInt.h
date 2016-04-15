@@ -195,6 +195,11 @@ public:
             return int(n);
     }
 
+    static size_t BinaryFromInt (int n)
+    {
+        return size_t(n) & c_mask;
+    }
+
 // public constants
 public:
     static const int c_minValue = -((1 << (NUMBITS - 1)));

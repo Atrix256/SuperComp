@@ -4,7 +4,7 @@
 #include "ANF.h"
 
 // change this to change the size of the superpositional integer
-typedef CSuperInt<2> TSuperInt;
+typedef CSuperInt<4> TSuperInt;
 
 // turn on for more detailed info
 #define SHOW_BITS_AND_ERROR()   0
@@ -14,8 +14,9 @@ typedef CSuperInt<2> TSuperInt;
 #define DO_PERF_REPORT()    0
 #define PERF_DATA_SAMPLES() 30
 
-typedef TSuperInt (*TestFunc_TSuperInt) (const TSuperInt& A, const TSuperInt& B);
-typedef int (*TestFunc_Int) (const int &a, const int &b);
+typedef std::function<TSuperInt(const TSuperInt&A, const TSuperInt&B)> TestFunc_TSuperInt;
+typedef std::function<int(const int&A, const int&B)> TestFunc_Int;
+typedef std::function<size_t(const size_t &a, const size_t &b)> TestFunc_Size_T;
 
 double g_PCFreq;
 
@@ -44,6 +45,9 @@ T DoMultiplication (const T&A, const T&B)
 template <typename T>
 T DoDivision (const T&A, const T&B)
 {
+    // TODO: fix this!
+    if (B == 0)
+        return 0;
     return A / B;
 }
 
@@ -51,23 +55,10 @@ T DoDivision (const T&A, const T&B)
 template <typename T>
 T DoModulus (const T&A, const T&B)
 {
-    return A / B;
-}
-
-//=================================================================================
-template <typename T, size_t NUM_INPUT_BITS, size_t NUM_OUTPUT_BITS, typename LAMBDA>
-std::function <T(const T&A, const T&B)> MakeANFTest (const LAMBDA& lambda)
-{
-    // TODO: maybe this function wraps DoTest to re-use terms lookup table? or a diff function to wrap it that takes the lambda and calls this and other things.
-
-    auto terms = MakeANFTerms<NUM_INPUT_BITS, NUM_OUTPUT_BITS>(lambda);
-
-    // todo: copy by reference if the terms stay in scope, which they SHOULD eventually
-    return [terms] (const T&A, const T&B) -> T
-    {
-        // TODO: combine A and B and use ANF terms somehow
+    // TODO: fix this!
+    if (B == 0)
         return 0;
-    };
+    return A % B;
 }
 
 //=================================================================================
@@ -160,6 +151,9 @@ bool DoTest (
 
     // Verify results
     printf("Result Verification: ");
+    #if SHOW_VERIFICATION()
+    printf("\n");
+    #endif
     QueryPerformanceCounter(&start);
     bool success = PermuteResults2Inputs(A, B, resultsAB, A.GetKeySet()->GetKeys(),
         [allowRightSideZero, opSymbol, testInt](size_t a, size_t b, size_t keyIndex, const TINT &key, size_t result)
@@ -194,6 +188,128 @@ bool DoTest (
     return success;
 }
 
+
+//=================================================================================
+template <size_t NUM_INPUT_BITS, size_t NUM_OUTPUT_BITS>
+bool DoTestANF (
+    bool allowRightSideZero,
+    const char* opSymbol,
+    const char* opName,
+    TestFunc_Size_T testSizeT,
+    int testIndex
+) {
+
+    // adapt testSizeT
+    auto lambda = [testSizeT] (size_t inputValue, size_t numInputBits) -> size_t {
+        const size_t bitsA = numInputBits / 2;
+        const size_t mask = (1 << bitsA) - 1;
+
+        size_t a = inputValue & mask;
+        size_t b = inputValue >> bitsA;
+
+        return testSizeT(a,b);
+    };
+
+    // make ANF terms for the function passed in
+    auto terms = MakeANFTerms<NUM_INPUT_BITS, NUM_OUTPUT_BITS>(lambda);
+
+    // make int function for the tests
+    auto anfTestInt = [&terms] (const int& A, const int& B) -> int {
+
+        // convert from signed integers to our own smaller format signed integer
+        size_t a = TSuperInt::BinaryFromInt(A);
+        size_t b = TSuperInt::BinaryFromInt(B);
+
+        size_t inputValue = size_t(a) + (size_t(b) << (NUM_INPUT_BITS / 2));
+
+        size_t ret = 0;
+        for (size_t outputBitIndex = 0; outputBitIndex < NUM_OUTPUT_BITS; ++outputBitIndex)
+        {
+            const size_t c_outputBitMask = 1 << outputBitIndex;
+            const std::vector<size_t>& bitTerms = terms[outputBitIndex];
+            bool xorSum = false;
+
+            for (size_t termIndex = 0; termIndex < bitTerms.size(); ++termIndex)
+            {
+                size_t term = bitTerms[termIndex];
+                if (term == 0)
+                {
+                    xorSum = 1 ^ xorSum;
+                }
+                else
+                {
+                    bool andProduct = true;
+                    for (size_t bitIndex = 0; bitIndex < NUM_INPUT_BITS; ++bitIndex)
+                    {
+                        const size_t bitMask = 1 << bitIndex;
+                        if ((term & bitMask) != 0)
+                        {
+                            if ((inputValue & bitMask) == 0)
+                                andProduct = false;
+                        }
+                    }
+                    xorSum = andProduct ^ xorSum;
+                }
+            }
+
+            if (xorSum)
+                ret |= c_outputBitMask;
+        }
+
+        return int(ret);
+    };
+
+    // make super int function for the tests
+    auto anfTestSuperInt = [&terms](const TSuperInt& a, const TSuperInt& b) -> TSuperInt {
+
+        const std::shared_ptr<CKeySet>& keySetPointer = a.GetKeySet();
+        const CKeySet& keySet = *keySetPointer;
+
+        CSuperInt<TSuperInt::c_numBits*2> inputValue(a.GetKeySet());
+        inputValue.ShiftLeft(NUM_INPUT_BITS/2);
+        for (size_t i = 0; i < NUM_INPUT_BITS / 2; ++i)
+            inputValue.GetBits()[i] = a.GetBits()[i];
+
+        for (size_t i = 0; i < NUM_INPUT_BITS / 2; ++i)
+            inputValue.GetBits()[i+NUM_INPUT_BITS/2] = b.GetBits()[i];
+
+        TSuperInt ret(a.GetKeySet());
+        for (size_t outputBitIndex = 0; outputBitIndex < NUM_OUTPUT_BITS; ++outputBitIndex)
+        {
+            const std::vector<size_t>& bitTerms = terms[outputBitIndex];
+            TINT xorSum = 0;
+
+            for (size_t termIndex = 0; termIndex < bitTerms.size(); ++termIndex)
+            {
+                size_t term = bitTerms[termIndex];
+                if (term == 0)
+                {
+                    xorSum = XOR(1, xorSum, keySet);
+                }
+                else
+                {
+                    TINT andProduct = 1;
+
+                    for (size_t bitIndex = 0; bitIndex < NUM_INPUT_BITS; ++bitIndex)
+                    {
+                        const size_t bitMask = 1 << bitIndex;
+                        if ((term & bitMask) != 0)
+                            andProduct = AND(andProduct, inputValue.GetBit(bitIndex), keySet);
+                    }
+                    xorSum = XOR(andProduct, xorSum, keySet);
+                }
+            }
+
+            ret.GetBit(outputBitIndex) = xorSum;
+        }
+
+        return ret;
+    };
+
+    // run the tests
+    return DoTest(allowRightSideZero, opSymbol, opName, anfTestSuperInt, anfTestInt, testIndex);
+}
+
 //=================================================================================
 bool DoTests (int testIndex)
 {
@@ -214,24 +330,20 @@ bool DoTests (int testIndex)
         return false;
     */
 
-    // TODO: can this somehow fit in with the regular DoTest function, or can we make a separate one for anf?
-    // TODO: needs to be an array of vector!
+    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "+", "ANF Addition", DoAddition<size_t>, testIndex))
+        return false;
 
+    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "-", "ANF Subtraction", DoSubtraction<size_t>, testIndex))
+        return false;
 
-    auto a = MakeANFTest<int,3,2>(
-        [] (size_t inputValue, size_t numInputBits) ->size_t
-        {
-            // Count how many bits there are
-            size_t result = 0;
-            while (inputValue)
-            {
-                if (inputValue & 1)
-                    result++;
-                inputValue = inputValue >> 1;
-            }
-            return result;
-        }
-    );
+    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "/", "ANF Multiplication", DoMultiplication<size_t>, testIndex))
+        return false;
+
+    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(false, "/", "ANF Division", DoDivision<size_t>, testIndex))
+        return false;
+
+    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(false, "%", "ANF Modulus", DoModulus<size_t>, testIndex))
+        return false;
 
     return true;
 }
@@ -262,12 +374,16 @@ int main (int argc, char **argv)
 /*
 
 TODO:
-* make a function to convert a function to anf (a list of terms)
-* then, make a superint function that evaluates an anf.  this way timing of creating anf isn't in the timings.
+* can we make it use templates instead of std::function? for speed
 
-* make supercomp have a boolean to fall back to using ANF.
-* make variadic (template?) XOR / AND? not sure if needed.
+* handle doing division and modulus with anf. hitting a divide by 0
+
+* make the full set of ANF tests
+
+* run sleepy on this code to see where time is being spent.
+ * 5 bit division totally runs fast in ANF so seems like copying / allocating might be the issue?
+
 * run perf tests of above using ANF, put data in folder, make graphs.  compare to other add, multiply, divide.
 
-? should we also try unums?
+? should we also try unums? or mention them in paper perhaps?
 */
