@@ -45,9 +45,6 @@ T DoMultiplication (const T&A, const T&B)
 template <typename T>
 T DoDivision (const T&A, const T&B)
 {
-    // TODO: fix this!
-    if (B == 0)
-        return 0;
     return A / B;
 }
 
@@ -55,9 +52,6 @@ T DoDivision (const T&A, const T&B)
 template <typename T>
 T DoModulus (const T&A, const T&B)
 {
-    // TODO: fix this!
-    if (B == 0)
-        return 0;
     return A % B;
 }
 
@@ -184,6 +178,9 @@ bool DoTest (
     printf("%f ms\n", double(stop.QuadPart - start.QuadPart) / g_PCFreq);
     ReportPerfData(opName, firstTest, false, double(stop.QuadPart - start.QuadPart) / g_PCFreq);
 
+    // report circuit complexity
+    printf("Circuit Complexity: %0.3f\n", keySet->GetComplexityIndex());
+
     // return false if the value verification failed
     return success;
 }
@@ -200,14 +197,17 @@ bool DoTestANF (
 ) {
 
     // adapt testSizeT
-    auto lambda = [testSizeT] (size_t inputValue, size_t numInputBits) -> size_t {
+    auto lambda = [testSizeT, allowRightSideZero](size_t inputValue, size_t numInputBits) -> size_t {
         const size_t bitsA = numInputBits / 2;
         const size_t mask = (1 << bitsA) - 1;
 
         size_t a = inputValue & mask;
         size_t b = inputValue >> bitsA;
 
-        return testSizeT(a,b);
+        if (allowRightSideZero || b != 0)
+            return testSizeT(a, b);
+        else
+            return 0;
     };
 
     // make ANF terms for the function passed in
@@ -330,20 +330,24 @@ bool DoTests (int testIndex)
         return false;
     */
 
-    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "+", "ANF Addition", DoAddition<size_t>, testIndex))
+    /*
+    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "+", "ANF_Addition", DoAddition<size_t>, testIndex))
         return false;
 
-    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "-", "ANF Subtraction", DoSubtraction<size_t>, testIndex))
+    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "-", "ANF_Subtraction", DoSubtraction<size_t>, testIndex))
         return false;
 
-    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "/", "ANF Multiplication", DoMultiplication<size_t>, testIndex))
+    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "/", "ANF_Multiplication", DoMultiplication<size_t>, testIndex))
+        return false;
+    */
+
+    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(false, "/", "ANF_Division", DoDivision<size_t>, testIndex))
         return false;
 
-    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(false, "/", "ANF Division", DoDivision<size_t>, testIndex))
+    /*
+    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(false, "%", "ANF_Modulus", DoModulus<size_t>, testIndex))
         return false;
-
-    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(false, "%", "ANF Modulus", DoModulus<size_t>, testIndex))
-        return false;
+    */
 
     return true;
 }
@@ -374,16 +378,35 @@ int main (int argc, char **argv)
 /*
 
 TODO:
-* can we make it use templates instead of std::function? for speed
+? does reducevalue help or hurt? might make no diff in anf
+ * test and see if it changes anything in anf. if not, drop it? even though it might help the other case? how to measure that.
+ * need to change note in paper if it makes no difference.
+ * could note it shrug.
 
-* handle doing division and modulus with anf. hitting a divide by 0
-
-* make the full set of ANF tests
+* Maybe need to find another metric for circuit complexity.  sum of keys doesn't seem to be appropriate as it doesn't tie to execution time.
 
 * run sleepy on this code to see where time is being spent.
  * 5 bit division totally runs fast in ANF so seems like copying / allocating might be the issue?
+ * or could really just be circuit complexity
 
 * run perf tests of above using ANF, put data in folder, make graphs.  compare to other add, multiply, divide.
 
-? should we also try unums? or mention them in paper perhaps?
+! note for paper: could multithread super int.  each output bit circuit could run in it's own thread.
+ * maybe multithread this and use it for timings?
+ * maybe option to multithread? not sure if it's exactly honest to report it as the main timing.
+  * maybe report timing per output bit, so could see how it would multithread? i dunno
+
+NOTES:
+
+Division complexity:  log10 of sum of keys
+
+       | Regular |   ANF   |
+-------|---------|---------|
+2 bits |   3.7   |   2.6   |
+3 bits |  13.1   |   4.0   |
+4 bits |  98.8   |   5.3   |
+5 bits |   N/A   |   6.6   |
+6 bits |   N/A   |   7.9   |
+
+
 */

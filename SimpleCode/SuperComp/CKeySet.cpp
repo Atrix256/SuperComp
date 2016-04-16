@@ -221,6 +221,16 @@ void CKeySet::Calculate (int numBits, const TINT& minKey, const std::function<vo
 }
 
 //=================================================================================
+float CKeySet::GetComplexityIndex () const
+{
+    // return the log10 of the sum of the keys
+    TINT keySum = 0;
+    for (const TINT& v : m_keys)
+        keySum = keySum + v;
+    return float(log10(keySum.convert_to<double>()));
+}
+
+//=================================================================================
 void CKeySet::MakeKey (size_t keyIndex)
 {
     // make sure our keys are odd
