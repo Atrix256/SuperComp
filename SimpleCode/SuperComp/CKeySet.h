@@ -25,7 +25,7 @@ public:
     const std::vector<TINT> &GetSuperPositionedBits () const { return m_superPositionedBits; }
     const std::vector<TINT> &GetKeys () const { return m_keys; }
 
-    void ReduceValue (TINT& v) const { /*if (m_reduce) { v = v % m_keysLCM; }*/ }
+    void ReduceValue (TINT& v) const { if (m_reduce) { v = v % m_keysLCM; } }
 
     float GetComplexityIndex () const;
 

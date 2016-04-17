@@ -120,7 +120,7 @@ public:
     {
         const CKeySet& keySet = *m_keySet;
         for (TINT& bit : m_bits)
-            bit = NOT(bit, keySet);
+            NOTEQ(bit, keySet);
 
         CSuperInt<NUMBITS> one(1, m_keySet);
         *this = *this + one;
@@ -139,7 +139,7 @@ public:
         // Step 1 - negate by XORing every bit against the condition bit.
         // AKA negate bits conditionally.
         for (TINT& v : m_bits)
-            v = XOR(v, condition, *m_keySet);
+            XOREQ(v, condition, *m_keySet);
 
         // Step 2 - add a number where the lowest bit is the condition bit.
         // AKA add 1 conditionally.
@@ -230,7 +230,14 @@ inline TINT XOR (const TINT &A, const TINT &B, const CKeySet &keySet)
 }
 
 //=================================================================================
-inline TINT AND(const TINT &A, const TINT &B, const CKeySet &keySet)
+inline void XOREQ (TINT &A, const TINT &B, const CKeySet &keySet)
+{
+    A += B;
+    keySet.ReduceValue(A);
+}
+
+//=================================================================================
+inline TINT AND (const TINT &A, const TINT &B, const CKeySet &keySet)
 {
     TINT result = A * B;
     keySet.ReduceValue(result);
@@ -238,7 +245,20 @@ inline TINT AND(const TINT &A, const TINT &B, const CKeySet &keySet)
 }
 
 //=================================================================================
-inline TINT NOT(const TINT &A, const CKeySet &keySet)
+inline void ANDEQ (TINT &A, const TINT &B, const CKeySet &keySet)
+{
+    A *= B;
+    keySet.ReduceValue(A);
+}
+
+//=================================================================================
+inline void NOTEQ (TINT &A, const CKeySet &keySet)
+{
+    XOREQ(A, 1, keySet);
+}
+
+//=================================================================================
+inline TINT NOT (const TINT &A, const CKeySet &keySet)
 {
     return XOR(A, TINT(1), keySet);
 }
@@ -294,7 +314,7 @@ CSuperInt<NUMBITS> operator * (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMB
     {
         CSuperInt<NUMBITS> row = b;
         for (TINT &v : row.GetBits())
-            v = AND(v, a.GetBit(i), keySet);
+            ANDEQ(v, a.GetBit(i), keySet);
 
         row.ShiftLeft(i);
         result = result + row;
@@ -363,7 +383,8 @@ TINT operator == (const CSuperInt<NUMBITS> &a, const CSuperInt<NUMBITS> &b)
     const CKeySet& keySet = *a.GetKeySet();
     TINT ANotLtB = NOT(a < b, keySet);
     TINT BNotLtA = NOT(b < a, keySet);
-    return AND(ANotLtB, BNotLtA, keySet);
+    ANDEQ(ANotLtB, BNotLtA, keySet);
+    return ANotLtB;
 }
 
 //=================================================================================

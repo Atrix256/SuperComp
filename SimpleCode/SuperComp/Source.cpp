@@ -4,7 +4,7 @@
 #include "ANF.h"
 
 // change this to change the size of the superpositional integer
-typedef CSuperInt<4> TSuperInt;
+typedef CSuperInt<3> TSuperInt;
 
 // turn on for more detailed info
 #define SHOW_BITS_AND_ERROR()   0
@@ -277,14 +277,15 @@ bool DoTestANF (
         for (size_t outputBitIndex = 0; outputBitIndex < NUM_OUTPUT_BITS; ++outputBitIndex)
         {
             const std::vector<size_t>& bitTerms = terms[outputBitIndex];
-            TINT xorSum = 0;
+            TINT &xorSum = ret.GetBit(outputBitIndex);
+            xorSum = 0;
 
             for (size_t termIndex = 0; termIndex < bitTerms.size(); ++termIndex)
             {
                 size_t term = bitTerms[termIndex];
                 if (term == 0)
                 {
-                    xorSum = XOR(1, xorSum, keySet);
+                    XOREQ(xorSum, 1, keySet);
                 }
                 else
                 {
@@ -294,13 +295,11 @@ bool DoTestANF (
                     {
                         const size_t bitMask = 1 << bitIndex;
                         if ((term & bitMask) != 0)
-                            andProduct = AND(andProduct, inputValue.GetBit(bitIndex), keySet);
+                            ANDEQ(andProduct, inputValue.GetBit(bitIndex), keySet);
                     }
-                    xorSum = XOR(andProduct, xorSum, keySet);
+                    XOREQ(xorSum, andProduct, keySet);
                 }
             }
-
-            ret.GetBit(outputBitIndex) = xorSum;
         }
 
         return ret;
@@ -313,7 +312,6 @@ bool DoTestANF (
 //=================================================================================
 bool DoTests (int testIndex)
 {
-    /*
     if (!DoTest(true, "+", "Addition", DoAddition<TSuperInt>, DoAddition<int>, testIndex))
         return false;
 
@@ -328,9 +326,7 @@ bool DoTests (int testIndex)
 
     if (!DoTest(false, "%", "Modulus", DoModulus<TSuperInt>, DoModulus<int>, testIndex))
         return false;
-    */
 
-    /*
     if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "+", "ANF_Addition", DoAddition<size_t>, testIndex))
         return false;
 
@@ -339,15 +335,12 @@ bool DoTests (int testIndex)
 
     if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "/", "ANF_Multiplication", DoMultiplication<size_t>, testIndex))
         return false;
-    */
 
     if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(false, "/", "ANF_Division", DoDivision<size_t>, testIndex))
         return false;
 
-    /*
     if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(false, "%", "ANF_Modulus", DoModulus<size_t>, testIndex))
         return false;
-    */
 
     return true;
 }
@@ -382,6 +375,7 @@ TODO:
  * test and see if it changes anything in anf. if not, drop it? even though it might help the other case? how to measure that.
  * need to change note in paper if it makes no difference.
  * could note it shrug.
+ ! it does help non anf; modulus in particular is helped a ton by it
 
 * Maybe need to find another metric for circuit complexity.  sum of keys doesn't seem to be appropriate as it doesn't tie to execution time.
 
@@ -395,6 +389,15 @@ TODO:
  * maybe multithread this and use it for timings?
  * maybe option to multithread? not sure if it's exactly honest to report it as the main timing.
   * maybe report timing per output bit, so could see how it would multithread? i dunno
+
+Paper:
+
+* graph complexity per operation, where x axis is # bits, and y axis is complexity measurement
+* mention bit shifting, bit rotation and mod power of 2 as being very fast operations!
+ * negating a number and absolute value are also not so bad
+ * check out source code to find other things like comparisons too
+* put in timings for anf based circuits!
+* do timings for semi ambiguous values?  Like if doing 4 bit vs 4 bit add, but don't care about half of the values. i dunno.
 
 NOTES:
 
