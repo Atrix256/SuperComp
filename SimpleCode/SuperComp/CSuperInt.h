@@ -184,6 +184,13 @@ public:
         return m_keySet;
     }
 
+    // has the keyset reduce each bit
+    void Reduce()
+    {
+        for (TINT& v : m_bits)
+            m_keySet->ReduceValueExplicit(v);
+    }
+
 // static interface
 public:
     static int IntFromBinary (size_t n)

@@ -149,6 +149,7 @@ bool DoTest (
     printf("\n");
     #endif
     QueryPerformanceCounter(&start);
+    resultsAB.Reduce();
     bool success = PermuteResults2Inputs(A, B, resultsAB, A.GetKeySet()->GetKeys(),
         [allowRightSideZero, opSymbol, testInt](size_t a, size_t b, size_t keyIndex, const TINT &key, size_t result)
         {
@@ -187,7 +188,6 @@ bool DoTest (
 
 
 //=================================================================================
-template <size_t NUM_INPUT_BITS, size_t NUM_OUTPUT_BITS>
 bool DoTestANF (
     bool allowRightSideZero,
     const char* opSymbol,
@@ -195,6 +195,9 @@ bool DoTestANF (
     TestFunc_Size_T testSizeT,
     int testIndex
 ) {
+
+    static const size_t c_numInputBits = TSuperInt::c_numBits * 2;
+    static const size_t c_numOutputBits = TSuperInt::c_numBits;
 
     // adapt testSizeT
     auto lambda = [testSizeT, allowRightSideZero](size_t inputValue, size_t numInputBits) -> size_t {
@@ -211,7 +214,7 @@ bool DoTestANF (
     };
 
     // make ANF terms for the function passed in
-    auto terms = MakeANFTerms<NUM_INPUT_BITS, NUM_OUTPUT_BITS>(lambda);
+    auto terms = MakeANFTerms<c_numInputBits, c_numOutputBits>(lambda);
 
     // make int function for the tests
     auto anfTestInt = [&terms] (const int& A, const int& B) -> int {
@@ -220,10 +223,10 @@ bool DoTestANF (
         size_t a = TSuperInt::BinaryFromInt(A);
         size_t b = TSuperInt::BinaryFromInt(B);
 
-        size_t inputValue = size_t(a) + (size_t(b) << (NUM_INPUT_BITS / 2));
+        size_t inputValue = size_t(a) + (size_t(b) << (c_numInputBits / 2));
 
         size_t ret = 0;
-        for (size_t outputBitIndex = 0; outputBitIndex < NUM_OUTPUT_BITS; ++outputBitIndex)
+        for (size_t outputBitIndex = 0; outputBitIndex < c_numOutputBits; ++outputBitIndex)
         {
             const size_t c_outputBitMask = 1 << outputBitIndex;
             const std::vector<size_t>& bitTerms = terms[outputBitIndex];
@@ -239,7 +242,7 @@ bool DoTestANF (
                 else
                 {
                     bool andProduct = true;
-                    for (size_t bitIndex = 0; bitIndex < NUM_INPUT_BITS; ++bitIndex)
+                    for (size_t bitIndex = 0; bitIndex < c_numInputBits; ++bitIndex)
                     {
                         const size_t bitMask = 1 << bitIndex;
                         if ((term & bitMask) != 0)
@@ -266,15 +269,15 @@ bool DoTestANF (
         const CKeySet& keySet = *keySetPointer;
 
         CSuperInt<TSuperInt::c_numBits*2> inputValue(a.GetKeySet());
-        inputValue.ShiftLeft(NUM_INPUT_BITS/2);
-        for (size_t i = 0; i < NUM_INPUT_BITS / 2; ++i)
+        inputValue.ShiftLeft(c_numInputBits/2);
+        for (size_t i = 0; i < c_numInputBits / 2; ++i)
             inputValue.GetBits()[i] = a.GetBits()[i];
 
-        for (size_t i = 0; i < NUM_INPUT_BITS / 2; ++i)
-            inputValue.GetBits()[i+NUM_INPUT_BITS/2] = b.GetBits()[i];
+        for (size_t i = 0; i < c_numInputBits / 2; ++i)
+            inputValue.GetBits()[i + c_numInputBits / 2] = b.GetBits()[i];
 
         TSuperInt ret(a.GetKeySet());
-        for (size_t outputBitIndex = 0; outputBitIndex < NUM_OUTPUT_BITS; ++outputBitIndex)
+        for (size_t outputBitIndex = 0; outputBitIndex < c_numOutputBits; ++outputBitIndex)
         {
             const std::vector<size_t>& bitTerms = terms[outputBitIndex];
             TINT &xorSum = ret.GetBit(outputBitIndex);
@@ -291,7 +294,7 @@ bool DoTestANF (
                 {
                     TINT andProduct = 1;
 
-                    for (size_t bitIndex = 0; bitIndex < NUM_INPUT_BITS; ++bitIndex)
+                    for (size_t bitIndex = 0; bitIndex < c_numInputBits; ++bitIndex)
                     {
                         const size_t bitMask = 1 << bitIndex;
                         if ((term & bitMask) != 0)
@@ -327,19 +330,19 @@ bool DoTests (int testIndex)
     if (!DoTest(false, "%", "Modulus", DoModulus<TSuperInt>, DoModulus<int>, testIndex))
         return false;
 
-    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "+", "ANF_Addition", DoAddition<size_t>, testIndex))
+    if (!DoTestANF(true, "+", "ANF_Addition", DoAddition<size_t>, testIndex))
         return false;
 
-    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "-", "ANF_Subtraction", DoSubtraction<size_t>, testIndex))
+    if (!DoTestANF(true, "-", "ANF_Subtraction", DoSubtraction<size_t>, testIndex))
         return false;
 
-    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(true, "/", "ANF_Multiplication", DoMultiplication<size_t>, testIndex))
+    if (!DoTestANF(true, "/", "ANF_Multiplication", DoMultiplication<size_t>, testIndex))
         return false;
 
-    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(false, "/", "ANF_Division", DoDivision<size_t>, testIndex))
+    if (!DoTestANF(false, "/", "ANF_Division", DoDivision<size_t>, testIndex))
         return false;
 
-    if (!DoTestANF<TSuperInt::c_numBits * 2, TSuperInt::c_numBits>(false, "%", "ANF_Modulus", DoModulus<size_t>, testIndex))
+    if (!DoTestANF(false, "%", "ANF_Modulus", DoModulus<size_t>, testIndex))
         return false;
 
     return true;
@@ -371,11 +374,19 @@ int main (int argc, char **argv)
 /*
 
 TODO:
+* make it so the anf circuits don't reduce, but the others do?
+
 ? does reducevalue help or hurt? might make no diff in anf
  * test and see if it changes anything in anf. if not, drop it? even though it might help the other case? how to measure that.
  * need to change note in paper if it makes no difference.
  * could note it shrug.
  ! it does help non anf; modulus in particular is helped a ton by it
+ ! mixed results.  sometimes helps, sometimes hurts, depending on the circuit.
+  * mostly not helped with ANF setup.
+  * mostly helps the non anf setup
+  * likely related to "minimal circuitry" i think.
+ * maybe something to look into more deeply in the future? could just do simplification after operation for now?
+ * To simplify the paper, maybe focus on ANF execution times?
 
 * Maybe need to find another metric for circuit complexity.  sum of keys doesn't seem to be appropriate as it doesn't tie to execution time.
 
